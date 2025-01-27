@@ -1,0 +1,1 @@
+void mlp_example_XOR();
