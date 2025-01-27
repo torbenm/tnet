@@ -1,6 +1,10 @@
 #include "tnet.h"
+#include "mat.h"
 
-typedef param_t activationfunc(param_t value);
+#define ACTIVATION_FORWARD 0
+#define ACTIVATION_DERIVATIVE 1
+
+typedef vec activationfunc(vec value, int n, int activationMode);
 
 activationfunc av_relu;
 activationfunc av_logistic;

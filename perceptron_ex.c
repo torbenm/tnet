@@ -19,8 +19,8 @@ void perceptron_forward_print(struct perceptron *p, int numVals, mat values, vec
 
         vec_print(vals, p->numWeights);
         printf("=");
-        param_t res = perceptron_forward(p, vals);
-        printf("%.3f(%.3f)", res, truth[i]);
+        vec res = perceptron_forward(p, vals);
+        printf("%.3f(%.3f)", res[0], truth[i]);
     }
     printf("\n");
 }

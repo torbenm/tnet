@@ -10,7 +10,7 @@ struct perceptron
     activationfunc *activationFn;
 };
 
-param_t perceptron_forward(struct perceptron *p, vec vals);
+vec perceptron_forward(struct perceptron *p, vec vals);
 int perceptron_train(struct perceptron *p, int maxIter, int numTVals, mat tvals, vec truth, param_t learningRate);
 struct perceptron *perceptron_init(int numWeights);
 void perceptron_free(struct perceptron *p);

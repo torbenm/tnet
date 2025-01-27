@@ -2,23 +2,91 @@
 
 #include "tnet.h"
 #include "activation.h"
+#include "mat.h"
 
-param_t av_heaviside(param_t val)
+vec av_heaviside(vec v, int n, int activationMode)
 {
-    return val >= 0;
+    vec o = vec_alloc(n);
+    if (activationMode == ACTIVATION_FORWARD)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            o[i] = v[i] >= 0;
+        }
+    }
+    return o;
 }
 
-param_t av_logistic(param_t val)
+vec av_logistic(vec v, int n, int activationMode)
 {
-    return 1.0 / (1.0 + exp(-val));
+    vec o = vec_alloc(n);
+
+    if (activationMode == ACTIVATION_FORWARD)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            o[i] = 1.0 / (1.0 + exp(-v[i]));
+        }
+    }
+    return o;
 }
 
-param_t av_relu(param_t val)
+vec av_relu(vec v, int n, int activationMode)
 {
-    return fmax(0.0, val);
+    vec o = vec_alloc(n);
+
+    if (activationMode == ACTIVATION_FORWARD)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            o[i] = fmax(0.0, v[i]);
+        }
+    }
+    return o;
 }
 
-param_t av_tanh(param_t val)
+vec av_tanh(vec v, int n, int activationMode)
 {
-    return (exp(val) - exp(-val)) / (exp(val) + exp(-val));
+    vec o = vec_alloc(n);
+
+    if (activationMode == ACTIVATION_FORWARD)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            o[i] = (exp(v[i]) - exp(-v[i])) / (exp(v[i]) + exp(-v[i]));
+        }
+    }
+    return o;
+}
+
+vec av_sigmoid(vec v, int n, int activationMode)
+{
+    vec o = vec_alloc(n);
+
+    if (activationMode == ACTIVATION_FORWARD)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            o[i] = 1.0 / (1.0 + exp(-v[i]));
+        }
+    }
+    return o;
+}
+
+vec av_softmax(vec v, int n, int activationMode)
+{
+    vec o = vec_alloc(n);
+
+    if (activationMode == ACTIVATION_FORWARD)
+    {
+        param_t sumOfAll = 0;
+        for (int i = 0; i < n; i++)
+            sumOfAll += exp(v[i]);
+
+        for (int i = 0; i < n; i++)
+        {
+            o[i] = exp(v[i]) / sumOfAll;
+        }
+    }
+    return o;
 }

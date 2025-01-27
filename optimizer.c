@@ -2,8 +2,9 @@
 
 #include "optimizer.h"
 #include "tnet.h"
+#include "mlp.h"
 
-void opt_gradient_descent(int maxIter, param_t learningRate, param_t costThreshold, param_t diffThreshold, struct params *p)
+void opt_gradient_descent(int maxIter, param_t learningRate, param_t costThreshold, param_t diffThreshold, mat trainingValues, int numTrainingValues, struct mlp *p)
 {
     int converged = 0;
     int iter = 0;
@@ -15,6 +16,13 @@ void opt_gradient_descent(int maxIter, param_t learningRate, param_t costThresho
     {
         prev_cost = current_cost;
 
+        for (int t = 0; t < numTrainingValues; t++)
+        {
+            vec output = mlp_forward(p, trainingValues[t]);
+        }
+        // calculate deltas
+
+        // Check whether the network is converging...
         converged = fabs(prev_cost - current_cost) < diffThreshold || current_cost < costThreshold;
         iter++;
     }

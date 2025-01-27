@@ -40,6 +40,30 @@ vec mat_dot_product(mat m, vec v, int rows, int cols)
     }
     return o;
 }
+mat mat_elem_add(mat m1, mat m2, int rows, int cols)
+{
+    mat o = mat_alloc(rows, cols);
+    for (int r = 0; r < rows; r++)
+    {
+        for (int c = 0; c < cols; c++)
+        {
+            o[r][c] = m1[r][c] + m2[r][c];
+        }
+    }
+    return o;
+}
+mat mat_transpose(mat m, int rows, int cols)
+{
+    mat t = mat_alloc(rows, cols);
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
+            t[i][j] = m[j][i];
+        }
+    }
+    return t;
+}
 void mat_free(mat m, int rows)
 {
     for (int i = 0; i < rows; i++)
@@ -68,7 +92,18 @@ vec vec_alloc_rand(int n)
     }
     return v;
 }
-
+mat vec_transposed_vec_mul(vec a, vec b, param_t const_factor, int sa, int sb)
+{
+    mat m = mat_alloc(sa, sb);
+    for (int ia = 0; ia < sa; ia++)
+    {
+        for (int ib = 0; ib < sb; ib++)
+        {
+            m[ia][ib] = const_factor * a[ia] * b[ib];
+        }
+    }
+    return m;
+}
 vec vec_elem_mul(vec a, vec b, int n)
 {
     vec r = vec_alloc(n);
@@ -139,6 +174,13 @@ vec vec_from_array(int rows, param_t a[rows])
     {
         v[i] = a[i];
     }
+    return v;
+}
+
+vec vec_from_single(param_t val)
+{
+    vec v = vec_alloc(1);
+    v[0] = val;
     return v;
 }
 

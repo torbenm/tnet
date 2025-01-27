@@ -10,9 +10,12 @@ struct layer
     int numNodes;
     int numInputs;
     mat weights;
+    vec preActivations;
+    vec activations;
+    vec inputs;
     activationfunc *activationFn;
 };
 
 void layer_init(struct layer *l, int numNodes, int numInputs, activationfunc *activationFn);
 void layer_free(struct layer *layer);
-param_t *layer_forward(struct layer *l, param_t *values);
+vec layer_forward(struct layer *l, vec inputs);

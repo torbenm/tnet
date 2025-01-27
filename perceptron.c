@@ -11,12 +11,14 @@
 
 #define LEARNING_RATE 0.1
 
-param_t perceptron_forward(struct perceptron *p, vec vals)
+vec perceptron_forward(struct perceptron *p, vec vals)
 {
     vec r = vec_elem_mul(p->weights, vals, p->numWeights);
-    param_t sum = p->bias + vec_collapse_sum(r, p->numWeights);
+    vec sum = vec_from_single(p->bias + vec_collapse_sum(r, p->numWeights));
     free(r);
-    return p->activationFn(sum);
+    vec res = p->activationFn(sum, 1, ACTIVATION_FORWARD);
+    free(sum);
+    return res;
 }
 
 int perceptron_train(struct perceptron *p, int maxIter, int numTVals, mat tvals, vec truth, param_t learningRate)
@@ -28,8 +30,8 @@ int perceptron_train(struct perceptron *p, int maxIter, int numTVals, mat tvals,
         errSum = 0.0;
         for (int i = 0; i < numTVals; i++)
         {
-            param_t res = perceptron_forward(p, tvals[i]);
-            param_t error = truth[i] - res;
+            vec res = perceptron_forward(p, tvals[i]);
+            param_t error = truth[i] - res[0];
             errSum += fabs(error);
             vec deltaW = vec_mul_const(tvals[i], learningRate * error, p->numWeights);
             vec newWeights = vec_elem_add(p->weights, deltaW, p->numWeights);
