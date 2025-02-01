@@ -22,7 +22,7 @@ struct mlp *mlp_init(int numInputs, int numOutputs, int numHiddenLayers, int num
         p->layers[i] = layer_init(numParams[i], numWeights, av_relu);
         numWeights = numParams[i];
     }
-    p->layers[numHiddenLayers] = layer_init(numOutputs, numWeights, av_softmax);
+    p->layers[numHiddenLayers] = layer_init(numOutputs, numWeights, av_sigmoid);
     return p;
 }
 

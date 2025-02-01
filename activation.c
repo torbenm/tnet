@@ -91,6 +91,14 @@ vec av_sigmoid(vec v, int n, int activationMode)
             o[i] = 1.0 / (1.0 + exp(-v[i]));
         }
     }
+    else
+    {
+        for (int i = 0; i < n; i++)
+        {
+            param_t s = 1.0 / (1.0 + exp(-v[i]));
+            o[i] = s * (1 - s);
+        }
+    }
     return o;
 }
 

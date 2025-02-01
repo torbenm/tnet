@@ -11,3 +11,4 @@ activationfunc av_logistic;
 activationfunc av_tanh;
 activationfunc av_softmax;
 activationfunc av_heaviside;
+activationfunc av_sigmoid;
