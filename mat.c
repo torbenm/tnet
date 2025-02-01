@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <math.h>
 #include "tnet.h"
 #include "mat.h"
 #include "util.h"
@@ -15,6 +16,17 @@ mat mat_alloc(int rows, int cols)
     }
     return m;
 }
+
+mat mat_alloc_rand(int rows, int cols)
+{
+    mat m = malloc(rows * sizeof(param_t *));
+    for (int r = 0; r < rows; r++)
+    {
+        m[r] = vec_alloc_rand(cols);
+    }
+    return m;
+}
+
 mat mat_from_array(int rows, int cols, param_t a[rows][cols])
 {
     mat m = mat_alloc(rows, cols);
@@ -54,15 +66,33 @@ mat mat_elem_add(mat m1, mat m2, int rows, int cols)
 }
 mat mat_transpose(mat m, int rows, int cols)
 {
-    mat t = mat_alloc(rows, cols);
+    mat t = mat_alloc(cols, rows);
     for (int i = 0; i < rows; i++)
     {
         for (int j = 0; j < cols; j++)
         {
-            t[i][j] = m[j][i];
+            t[j][i] = m[i][j];
         }
     }
     return t;
+}
+void mat_print(mat m, int rows, int cols)
+{
+    printf("[");
+    for (int i = 0; i < rows; i++)
+    {
+        if (i > 0)
+            printf(", ");
+        vec_print(m[i], cols);
+    }
+    printf("]");
+}
+void mat_norm(mat m, int rows, int cols)
+{
+    for (int i = 0; i < rows; i++)
+    {
+        vec_norm(m[i], cols);
+    }
 }
 void mat_free(mat m, int rows)
 {
@@ -124,6 +154,30 @@ vec vec_elem_add(vec a, vec b, int n)
     return r;
 }
 
+void vec_norm(vec v, int n)
+{
+    param_t vec_len = 0;
+    for (int i = 0; i < n; i++)
+    {
+        vec_len += v[i] * v[i];
+    }
+    vec_len = sqrt(vec_len);
+    for (int i = 0; i < n; i++)
+    {
+        v[i] = v[i] / vec_len;
+    }
+}
+
+vec vec_elem_sub(vec a, vec b, int n)
+{
+    vec r = vec_alloc(n);
+    for (int i = 0; i < n; i++)
+    {
+        r[i] = a[i] - b[i];
+    }
+    return r;
+}
+
 param_t vec_collapse_sum(vec v, int n)
 {
     param_t sum = 0;
@@ -175,6 +229,16 @@ vec vec_from_array(int rows, param_t a[rows])
         v[i] = a[i];
     }
     return v;
+}
+
+vec *vec_array_from_array_of_arrays(int numVecs, int numElems, param_t a[numVecs][numElems])
+{
+    vec *vecs = malloc(numVecs * sizeof(vec *));
+    for (int i = 0; i < numVecs; i++)
+    {
+        vecs[i] = vec_from_array(numElems, a[i]);
+    }
+    return vecs;
 }
 
 vec vec_from_single(param_t val)

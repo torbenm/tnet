@@ -4,18 +4,18 @@
 #include "loss.h"
 #include "mat.h"
 #include "activation.h"
+#include "intermediate.h"
 
 struct layer
 {
     int numNodes;
     int numInputs;
     mat weights;
-    vec preActivations;
-    vec activations;
-    vec inputs;
+    vec bias;
     activationfunc *activationFn;
 };
 
-void layer_init(struct layer *l, int numNodes, int numInputs, activationfunc *activationFn);
+struct layer *layer_init(int numNodes, int numInputs, activationfunc *activationFn);
 void layer_free(struct layer *layer);
-vec layer_forward(struct layer *l, vec inputs);
+vec layer_forward(struct layer *l, vec inputs, struct intermediate *i);
+vec layer_backward(struct layer *l, vec previousSmallDelta, param_t learningRate, struct intermediate *curr, struct intermediate *prev, int isOutputLayer);

@@ -1,10 +1,17 @@
 #include <stdio.h>
 #include "mlp_ex.h"
 #include "mlp.h"
+#include "optimizer.h"
 
-void mlp_forward_print(struct mlp *p, int numVals, param_t values[numVals][p->numInputs], param_t truth[numVals])
+#define COST_THRESHOLD 0.001
+#define DIFF_THRESHOLD 0.000000001
+#define MAX_ITER 100000
+#define LEARNING_RATE 0.01
+
+void mlp_forward_print(struct mlp *p, int numVals, vec values[numVals], vec truth[numVals])
 {
-    param_t predictions[numVals];
+    vec predictions[numVals];
+    struct intermediate ims[p->numLayers + 1];
     for (int i = 0; i < numVals; i++)
     {
         if (i > 0)
@@ -16,24 +23,29 @@ void mlp_forward_print(struct mlp *p, int numVals, param_t values[numVals][p->nu
             printf("%.3f", values[i][w]);
         }
         printf("=");
-        predictions[i] = mlp_forward(p, values[i])[0];
-        printf("%.3f(%.3f)", predictions[i], truth[i]);
+        predictions[i] = mlp_forward(p, values[i], ims);
+        vec_print(predictions[i], p->numOutputs);
+        printf("(");
+        vec_print(truth[i], p->numOutputs);
+        printf(")");
     }
-    param_t loss = p->lossFn(numVals, predictions, truth);
+    param_t loss = p->lossFn(numVals, 1, predictions, truth);
     printf(". Loss=%.3f\n", loss);
 }
 
 void mlp_example_XOR()
 {
     const int numLayers = 1;
-    int numParamsPerLayer[1] = {1};
+    int numParamsPerLayer[3] = {2};
 
     param_t values[4][2] = {{0.0, 0.0},
                             {0.0, 1.0},
                             {1.0, 0.0},
                             {1.0, 1.0}};
-    param_t truths[4] = {0.0, 1.0, 1.0, 0.0};
+    param_t truths[4][2] = {{0.0, 1.0}, {1.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}};
 
-    struct mlp *p = mlp_init(2, 1, numLayers, numParamsPerLayer);
-    mlp_forward_print(p, 4, values, truths);
+    struct mlp *p = mlp_init(2, 2, numLayers, numParamsPerLayer);
+    mlp_forward_print(p, 4, vec_array_from_array_of_arrays(4, 2, values), vec_array_from_array_of_arrays(4, 2, truths));
+    opt_gradient_descent(MAX_ITER, LEARNING_RATE, COST_THRESHOLD, DIFF_THRESHOLD, mat_from_array(4, 2, values), 4, mat_from_array(4, 2, truths), p);
+    mlp_forward_print(p, 4, vec_array_from_array_of_arrays(4, 2, values), vec_array_from_array_of_arrays(4, 2, truths));
 }

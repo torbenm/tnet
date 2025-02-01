@@ -1,5 +1,8 @@
+#pragma once
+
 #include "tnet.h"
 #include "layer.h"
+#include "mat.h"
 #include "activation.h"
 #include "loss.h"
 
@@ -13,4 +16,5 @@ struct mlp
 };
 
 struct mlp *mlp_init(int numInputs, int numOutputs, int numHiddenLayers, int numParams[numHiddenLayers]);
-param_t *mlp_forward(struct mlp *p, param_t values[p->numInputs]);
+vec mlp_forward(struct mlp *p, vec inputs, struct intermediate ims[p->numLayers]);
+void mlp_backward(struct mlp *p, vec delta, param_t learningRate, struct intermediate ims[p->numLayers]);

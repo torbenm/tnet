@@ -3,24 +3,34 @@
 #include "tnet.h"
 #include "loss.h"
 
-param_t loss_mse(int numExamples, param_t predictions[numExamples], param_t truths[numExamples])
+param_t loss_mse(int numExamples, int vecSize, vec predictions[numExamples], vec truths[numExamples])
 {
     param_t sum = 0;
     for (int i = 0; i < numExamples; i++)
     {
-        param_t err = truths[i] - predictions[i];
-        sum += err * err;
+        param_t v_sum = 0;
+        for (int v = 0; v < vecSize; v++)
+        {
+            param_t err = truths[i][v] - predictions[i][v];
+            v_sum += err * err;
+        }
+        sum += v_sum / (param_t)vecSize;
     }
     return sum / (param_t)numExamples;
 }
 
-param_t loss_abssum(int numExamples, param_t predictions[numExamples], param_t truths[numExamples])
+param_t loss_abssum(int numExamples, int vecSize, vec predictions[numExamples], vec truths[numExamples])
 {
     param_t sum = 0;
     for (int i = 0; i < numExamples; i++)
     {
-        param_t err = truths[i] - predictions[i];
-        sum += fabs(err);
+        param_t v_sum = 0;
+        for (int v = 0; v < vecSize; v++)
+        {
+            param_t err = truths[i][v] - predictions[i][v];
+            v_sum += fabs(err);
+        }
+        sum += v_sum / (param_t)vecSize;
     }
-    return sum;
+    return sum / (param_t)numExamples;
 }
