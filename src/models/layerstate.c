@@ -4,16 +4,29 @@
 #include "core.h"
 #include "models.h"
 
-struct layerstate *layerstate_alloc(int nOutputs)
+struct forwardstate *forwardstate_alloc(int nOutputs)
 {
-    struct layerstate *i = malloc(sizeof(struct layerstate));
+    struct forwardstate *i = malloc(sizeof(struct forwardstate));
     i->nOutputs = nOutputs;
     return i;
 }
 
-void layerstate_free(struct layerstate *i)
+void forwardstate_free(struct forwardstate *i)
 {
     vec_free(i->activations);
     vec_free(i->preActivations);
+    free(i);
+}
+
+struct backwardstate *backwardstate_alloc()
+{
+    return malloc(sizeof(struct backwardstate));
+}
+
+void backwardstate_free(struct backwardstate *i)
+{
+    vec_free(i->bias_gradients);
+    // TODO mat_free(i->weight_gradients);
+    vec_free(i->delta);
     free(i);
 }

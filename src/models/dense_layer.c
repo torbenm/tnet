@@ -22,7 +22,7 @@ struct seqmodel_layer *dense_layer_init(int numNodes, int numInputs, activationf
     return l;
 }
 
-vec dense_layer_forward(void *p, vec inputs, struct layerstate *state)
+vec dense_layer_forward(void *p, vec inputs, struct forwardstate *state)
 {
     struct denselayer_props *dp = (struct denselayer_props *)p;
 
@@ -45,7 +45,7 @@ vec dense_layer_forward(void *p, vec inputs, struct layerstate *state)
     return activations;
 }
 
-vec dense_layer_backward(void *p, vec previousSmallDelta, struct layerstate *curr, struct layerstate *prev, param_t learningRate, int isOutputLayer)
+vec dense_layer_backward(void *p, vec previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate, int isOutputLayer)
 {
     struct denselayer_props *dp = (struct denselayer_props *)p;
 

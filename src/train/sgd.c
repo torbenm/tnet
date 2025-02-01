@@ -20,7 +20,7 @@ struct optimizer *opt_sgd_init(param_t learningRate, lossfunc *lossFn)
 
 param_t opt_sgd(struct seqmodel *seq, param_t *params, int numExamples, vec inputs[numExamples], vec truths[numExamples], lossfunc *lossFn)
 {
-    struct layerstate **training_states = malloc(numExamples * sizeof(struct layerstate *));
+    struct forwardstate **forwardstates = malloc(numExamples * sizeof(struct forwardstate *));
     vec predictions[numExamples];
 
     param_t learningRate = params[0];
@@ -30,15 +30,15 @@ param_t opt_sgd(struct seqmodel *seq, param_t *params, int numExamples, vec inpu
      */
     for (int t = 0; t < numExamples; t++)
     {
-        training_states[t] = malloc((seq->numLayers + 1) * sizeof(struct layerstate));
+        forwardstates[t] = malloc((seq->numLayers + 1) * sizeof(struct forwardstate));
         for (int l = 0; l < seq->numLayers; l++)
         {
             if (l == 0)
-                seq->layers[l]->forward(seq->layers[l]->layerProps, inputs[t], &training_states[t][l]);
+                seq->layers[l]->forward(seq->layers[l]->layerProps, inputs[t], &forwardstates[t][l]);
             else
-                seq->layers[l]->forward(seq->layers[l]->layerProps, training_states[t][l - 1].activations, &training_states[t][l]);
+                seq->layers[l]->forward(seq->layers[l]->layerProps, forwardstates[t][l - 1].activations, &forwardstates[t][l]);
         }
-        predictions[t] = training_states[t][seq->numLayers - 1].activations;
+        predictions[t] = forwardstates[t][seq->numLayers - 1].activations;
     }
 
     /**
@@ -49,13 +49,13 @@ param_t opt_sgd(struct seqmodel *seq, param_t *params, int numExamples, vec inpu
         vec nextDelta = vec_elem_sub(truths[t], predictions[t], seq->layers[seq->numLayers - 1]->numOutputs);
         for (int l = seq->numLayers - 1; l >= 0; l--)
         {
-            struct layerstate *prev = NULL;
+            struct forwardstate *prev = NULL;
             if (l > 0)
-                prev = &training_states[t][l - 1];
+                prev = &forwardstates[t][l - 1];
             nextDelta = seq->layers[l]->backward(
                 seq->layers[l]->layerProps,
                 nextDelta,
-                &training_states[t][l],
+                &forwardstates[t][l],
                 prev,
                 learningRate,
                 (l == (seq->numLayers - 1)));

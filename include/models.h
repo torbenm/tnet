@@ -3,16 +3,26 @@
 #include "core.h"
 #include "funcs.h"
 
-struct layerstate
+struct forwardstate
 {
-    // TODO: need to map this to mat at some point...
     vec activations;
     vec preActivations;
     int nOutputs;
 };
 
-struct layerstate *layerstate_alloc(int size);
-void layerstate_free(struct layerstate *);
+struct forwardstate *forwardstate_alloc(int size);
+void forwardstate_free(struct forwardstate *);
+
+struct backwardstate
+{
+    mat weight_gradients;
+    vec bias_gradients;
+    vec delta;
+};
+
+struct backwardstate *backwardstate_alloc();
+void backwardstate_free(struct backwardstate *);
+
 struct perceptron
 {
     param_t bias;
@@ -32,8 +42,8 @@ void perceptron_forward_print(struct perceptron *p, int numVals, mat values, vec
  */
 #define SEQMODEL_STD_SIZE 4
 
-typedef vec seqmodel_layer_forward(void *layer_struct, vec input, struct layerstate *state);
-typedef vec seqmodel_layer_backward(void *p, vec previousSmallDelta, struct layerstate *curr, struct layerstate *prev, param_t learningRate, int isOutputLayer);
+typedef vec seqmodel_layer_forward(void *layer_struct, vec input, struct forwardstate *state);
+typedef vec seqmodel_layer_backward(void *p, vec previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate, int isOutputLayer);
 struct seqmodel_layer
 {
     void *layerProps;

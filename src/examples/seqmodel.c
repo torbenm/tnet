@@ -32,8 +32,8 @@ void seq_example_XOR()
     struct optimizer *o = opt_sgd_init(LEARNING_RATE, loss_mse);
     train(s, 4, mat_from_array(4, 2, values), mat_from_array(4, 2, truths), MAX_ITER, o, DIFF_THRESHOLD, COST_THRESHOLD);
 
-    // for (int i = 0; i < 4; i++)
-    // {
-    //     mat_print(seqmodel_predict(s, vec_from_array(2, values[i])), 1, 2);
-    // }
+    for (int i = 0; i < 4; i++)
+    {
+        vec_print(seqmodel_predict(s, vec_from_array(2, values[i])), 2);
+    }
 }
