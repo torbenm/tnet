@@ -1,7 +1,7 @@
 #pragma once
 
-// MLP
-void mlp_example_XOR();
+// Seqmodel
+void seq_example_XOR();
 
 // Perceptron
 void perceptron_example_AND();

@@ -25,7 +25,19 @@ mat mat_alloc_rand(int rows, int cols)
     }
     return m;
 }
+mat mat_from_vec(vec v)
+{
+    mat m = malloc(sizeof(vec *));
+    m[0] = v;
+    return m;
+}
 
+mat mat_from_singledim_array(int elems, param_t a[elems])
+{
+    mat m = mat_alloc(1, elems);
+    m[0] = vec_from_array(elems, a);
+    return m;
+}
 mat mat_from_array(int rows, int cols, param_t a[rows][cols])
 {
     mat m = mat_alloc(rows, cols);
@@ -51,6 +63,18 @@ vec mat_dot_product(mat m, vec v, int rows, int cols)
     }
     return o;
 }
+mat mat_elem_add_mul(mat m1, mat m2, param_t factor, int rows, int cols)
+{
+    mat o = mat_alloc(rows, cols);
+    for (int r = 0; r < rows; r++)
+    {
+        for (int c = 0; c < cols; c++)
+        {
+            o[r][c] = m1[r][c] + m2[r][c];
+        }
+    }
+    return o;
+}
 mat mat_elem_add(mat m1, mat m2, int rows, int cols)
 {
     mat o = mat_alloc(rows, cols);
@@ -59,6 +83,18 @@ mat mat_elem_add(mat m1, mat m2, int rows, int cols)
         for (int c = 0; c < cols; c++)
         {
             o[r][c] = m1[r][c] + m2[r][c];
+        }
+    }
+    return o;
+}
+mat mat_elem_sub(mat m1, mat m2, int rows, int cols)
+{
+    mat o = mat_alloc(rows, cols);
+    for (int r = 0; r < rows; r++)
+    {
+        for (int c = 0; c < cols; c++)
+        {
+            o[r][c] = m1[r][c] - m2[r][c];
         }
     }
     return o;

@@ -4,14 +4,14 @@
 #include "core.h"
 #include "models.h"
 
-struct intermediate *intermediate_alloc(int nOutputs)
+struct layerstate *layerstate_alloc(int nOutputs)
 {
-    struct intermediate *i = malloc(sizeof(struct intermediate));
+    struct layerstate *i = malloc(sizeof(struct layerstate));
     i->nOutputs = nOutputs;
     return i;
 }
 
-void intermediate_free(struct intermediate *i)
+void layerstate_free(struct layerstate *i)
 {
     vec_free(i->activations);
     vec_free(i->preActivations);

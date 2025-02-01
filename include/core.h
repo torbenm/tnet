@@ -12,7 +12,11 @@ void mat_free(mat m, int rows);
 mat mat_transpose(mat m, int rows, int cols);
 vec mat_dot_product(mat m, vec v, int rows, int cols);
 mat mat_elem_add(mat m1, mat m2, int rows, int cols);
+mat mat_elem_sub(mat m1, mat m2, int rows, int cols);
+mat mat_elem_add_mul(mat m1, mat m2, param_t factor, int rows, int cols);
 mat mat_from_array(int rows, int cols, param_t a[rows][cols]);
+mat mat_from_vec(vec v);
+mat mat_from_singledim_array(int elems, param_t a[elems]);
 void mat_norm(mat m, int rows, int cols);
 void mat_print(mat m, int rows, int cols);
 

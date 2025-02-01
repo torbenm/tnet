@@ -3,43 +3,16 @@
 #include "core.h"
 #include "funcs.h"
 
-struct intermediate
+struct layerstate
 {
+    // TODO: need to map this to mat at some point...
     vec activations;
     vec preActivations;
     int nOutputs;
 };
 
-struct intermediate *intermediate_alloc(int size);
-void intermediate_free(struct intermediate *);
-
-struct layer
-{
-    int numNodes;
-    int numInputs;
-    mat weights;
-    vec bias;
-    activationfunc *activationFn;
-};
-
-struct layer *layer_init(int numNodes, int numInputs, activationfunc *activationFn);
-void layer_free(struct layer *layer);
-vec layer_forward(struct layer *l, vec inputs, struct intermediate *i);
-vec layer_backward(struct layer *l, vec previousSmallDelta, param_t learningRate, struct intermediate *curr, struct intermediate *prev, int isOutputLayer);
-
-struct mlp
-{
-    int numLayers;
-    int numInputs;
-    int numOutputs;
-    struct layer **layers;
-    lossfunc *lossFn;
-};
-
-struct mlp *mlp_init(int numInputs, int numOutputs, int numHiddenLayers, int numParams[numHiddenLayers]);
-vec mlp_forward(struct mlp *p, vec inputs, struct intermediate ims[p->numLayers]);
-void mlp_backward(struct mlp *p, vec delta, param_t learningRate, struct intermediate ims[p->numLayers]);
-
+struct layerstate *layerstate_alloc(int size);
+void layerstate_free(struct layerstate *);
 struct perceptron
 {
     param_t bias;
@@ -53,3 +26,51 @@ int perceptron_train(struct perceptron *p, int maxIter, int numTVals, mat tvals,
 struct perceptron *perceptron_init(int numWeights);
 void perceptron_free(struct perceptron *p);
 void perceptron_forward_print(struct perceptron *p, int numVals, mat values, vec truth);
+
+/**
+ * NEW Seqmodel & its possible models
+ */
+#define SEQMODEL_STD_SIZE 4
+
+typedef vec seqmodel_layer_forward(void *layer_struct, vec input, struct layerstate *state);
+typedef vec seqmodel_layer_backward(void *p, vec previousSmallDelta, struct layerstate *curr, struct layerstate *prev, param_t learningRate, int isOutputLayer);
+struct seqmodel_layer
+{
+    void *layerProps;
+    int numOutputs;
+    seqmodel_layer_forward *forward;
+    seqmodel_layer_backward *backward;
+};
+
+struct seqmodel
+{
+    int numLayers;
+    int _layerBufferSize;
+    struct seqmodel_layer **layers;
+};
+struct seqmodel *seqmodel_init();
+void seqmodel_resize(struct seqmodel *seq, int newSize);
+void seqmodel_push(struct seqmodel *seq, struct seqmodel_layer *layer);
+vec seqmodel_predict(struct seqmodel *seq, vec input);
+
+struct denselayer_props
+{
+    int numNodes;
+    int numInputs;
+    mat weights;
+    vec bias;
+    activationfunc *activationFn;
+};
+
+struct seqmodel_layer *dense_layer_init(int numNodes, int numInputs, activationfunc *activationFn);
+seqmodel_layer_forward dense_layer_forward;
+seqmodel_layer_backward dense_layer_backward;
+
+struct inputlayer_props
+{
+    int numInputs;
+};
+
+struct seqmodel_layer *input_layer_init(int numInputs);
+seqmodel_layer_forward input_layer_forward;
+seqmodel_layer_backward input_layer_backward;

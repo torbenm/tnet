@@ -67,14 +67,13 @@ int main(int argc, char **argv)
                 clifunc_init("xor", perceptron_example_XOR)};
             return cli_example(argc, argv, numFuncs, funcs);
         }
-        else if (strcmp(argv[1], "mlp") == 0)
+        else if (strcmp(argv[1], "seq") == 0)
         {
             const int numFuncs = 1;
             struct clifunc *funcs[numFuncs] = {
-                clifunc_init("xor", mlp_example_XOR)};
+                clifunc_init("xor", seq_example_XOR)};
             return cli_example(argc, argv, numFuncs, funcs);
         }
-
         else
         {
             printf("Unknown command: %s\n", argv[1]);
