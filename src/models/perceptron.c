@@ -14,7 +14,7 @@ vec perceptron_forward(struct perceptron *p, vec vals)
     vec r = vec_elem_mul(p->weights, vals, p->numWeights);
     vec sum = vec_from_single(p->bias + vec_collapse_sum(r, p->numWeights));
     free(r);
-    vec res = p->activationFn(sum, 1, ACTIVATION_FORWARD);
+    vec res = p->activationFn(sum, 1, FUNCS_NORMAL);
     free(sum);
     return res;
 }

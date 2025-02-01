@@ -33,7 +33,7 @@ vec input_layer_forward(void *p, vec inputs, struct forwardstate *state)
     return inputs;
 }
 
-struct backwardstate *input_layer_backward(void *p, vec previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate, int isOutputLayer)
+struct backwardstate *input_layer_backward(void *p, vec previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate)
 {
     return NULL; // should _not_ be used!
 }

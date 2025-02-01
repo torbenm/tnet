@@ -53,6 +53,7 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
 
     for (int t = 0; t < batchSize; t++)
     {
+        // initialize with derivative of mse (TODO: replace with function call)
         vec nextDelta = vec_elem_sub(predictions[t], truths[t], seq->layers[seq->numLayers - 1]->numOutputs);
         struct backwardstate **localbackwardstates = malloc(seq->numLayers * sizeof(struct backwardstate *));
         // Calculate deltas pass
@@ -66,8 +67,7 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
                 nextDelta,
                 &forwardstates[t][l],
                 prev,
-                learningRate,
-                (l == (seq->numLayers - 1)));
+                learningRate);
 
             if (localbackwardstates[l] != NULL)
             {
@@ -131,5 +131,5 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
     {
         predictions[t] = seqmodel_predict(seq, inputs[t]);
     }
-    return trainingpass_init(lossFn(batchSize, 1, predictions, truths), globalbackwardstates, seq->numLayers);
+    return trainingpass_init(lossFn(batchSize, seq->layers[seq->numLayers - 1]->numOutputs, predictions, truths, FUNCS_NORMAL), globalbackwardstates, seq->numLayers);
 }

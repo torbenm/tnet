@@ -7,7 +7,7 @@
 vec av_heaviside(vec v, int n, int activationMode)
 {
     vec o = vec_alloc(n);
-    if (activationMode == ACTIVATION_FORWARD)
+    if (activationMode == FUNCS_NORMAL)
     {
         for (int i = 0; i < n; i++)
         {
@@ -25,7 +25,7 @@ vec av_logistic(vec v, int n, int activationMode)
 {
     vec o = vec_alloc(n);
 
-    if (activationMode == ACTIVATION_FORWARD)
+    if (activationMode == FUNCS_NORMAL)
     {
         for (int i = 0; i < n; i++)
         {
@@ -46,7 +46,7 @@ vec av_relu(vec v, int n, int activationMode)
 {
     vec o = vec_alloc(n);
 
-    if (activationMode == ACTIVATION_FORWARD)
+    if (activationMode == FUNCS_NORMAL)
     {
         for (int i = 0; i < n; i++)
         {
@@ -74,7 +74,7 @@ vec av_tanh(vec v, int n, int activationMode)
 {
     vec o = vec_alloc(n);
 
-    if (activationMode == ACTIVATION_FORWARD)
+    if (activationMode == FUNCS_NORMAL)
     {
         for (int i = 0; i < n; i++)
         {
@@ -95,7 +95,7 @@ vec av_sigmoid(vec v, int n, int activationMode)
 {
     vec o = vec_alloc(n);
 
-    if (activationMode == ACTIVATION_FORWARD)
+    if (activationMode == FUNCS_NORMAL)
     {
         for (int i = 0; i < n; i++)
         {
@@ -117,7 +117,7 @@ vec av_softmax(vec v, int n, int activationMode)
 {
     vec o = vec_alloc(n);
 
-    if (activationMode == ACTIVATION_FORWARD)
+    if (activationMode == FUNCS_NORMAL)
     {
         param_t sumOfAll = 0;
         for (int i = 0; i < n; i++)

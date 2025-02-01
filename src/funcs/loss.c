@@ -3,7 +3,7 @@
 #include "core.h"
 #include "funcs.h"
 
-param_t loss_mse(int numExamples, int vecSize, vec predictions[numExamples], vec truths[numExamples])
+param_t loss_mse(int numExamples, int vecSize, vec predictions[numExamples], vec truths[numExamples], int derivative)
 {
     param_t sum = 0;
     for (int i = 0; i < numExamples; i++)
@@ -19,7 +19,7 @@ param_t loss_mse(int numExamples, int vecSize, vec predictions[numExamples], vec
     return sum / (param_t)numExamples;
 }
 
-param_t loss_abssum(int numExamples, int vecSize, vec predictions[numExamples], vec truths[numExamples])
+param_t loss_abssum(int numExamples, int vecSize, vec predictions[numExamples], vec truths[numExamples], int derivative)
 {
     param_t sum = 0;
     for (int i = 0; i < numExamples; i++)

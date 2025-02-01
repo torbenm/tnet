@@ -2,10 +2,10 @@
 
 #include "core.h"
 
-#define ACTIVATION_FORWARD 0
-#define ACTIVATION_DERIVATIVE 1
+#define FUNCS_NORMAL 0
+#define FUNCS_DERIVATIVE 1
 
-typedef vec activationfunc(vec value, int n, int activationMode);
+typedef vec activationfunc(vec value, int n, int mode);
 
 activationfunc av_relu;
 activationfunc av_logistic;
@@ -14,7 +14,7 @@ activationfunc av_softmax;
 activationfunc av_heaviside;
 activationfunc av_sigmoid;
 
-typedef param_t lossfunc(int numExamples, int vecSize, vec predictions[numExamples], vec truths[numExamples]);
+typedef param_t lossfunc(int numExamples, int vecSize, vec predictions[numExamples], vec truths[numExamples], int mode);
 
 lossfunc loss_mse;
 lossfunc loss_abssum;

@@ -46,7 +46,7 @@ void perceptron_forward_print(struct perceptron *p, int numVals, mat values, vec
 #define SEQMODEL_STD_SIZE 4
 
 typedef vec seqmodel_layer_forward(void *layer_struct, vec input, struct forwardstate *state);
-typedef struct backwardstate *seqmodel_layer_backward(void *p, vec previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate, int isOutputLayer);
+typedef struct backwardstate *seqmodel_layer_backward(void *p, vec previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate);
 typedef void seqmodel_layer_update_weights(void *p, struct backwardstate *bs, param_t updateFactor);
 struct seqmodel_layer
 {

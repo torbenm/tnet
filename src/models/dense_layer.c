@@ -30,7 +30,7 @@ vec dense_layer_forward(void *p, vec inputs, struct forwardstate *state)
 
     vec dotProduct = mat_dot_product(dp->weights, inputs, dp->numNodes, dp->numInputs);
     vec preActivations = vec_elem_add(dotProduct, dp->bias, dp->numNodes);
-    vec activations = dp->activationFn(preActivations, dp->numNodes, ACTIVATION_FORWARD);
+    vec activations = dp->activationFn(preActivations, dp->numNodes, FUNCS_NORMAL);
 
     if (state != NULL)
     {
@@ -59,19 +59,13 @@ void dense_layer_update_weights(void *p, struct backwardstate *bs, param_t updat
     dp->bias = newBias;
 }
 
-struct backwardstate *dense_layer_backward(void *p, vec previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate, int isOutputLayer)
+struct backwardstate *dense_layer_backward(void *p, vec previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate)
 {
     struct denselayer_props *dp = (struct denselayer_props *)p;
     struct backwardstate *bs = backwardstate_alloc(dp->numNodes, dp->numInputs);
 
-    vec smallDelta = previousSmallDelta; // only one dimension for dense_layer
-    if (!isOutputLayer)
-    {
-        // Middle layer - previousSmallDelta needs to be multiplied with activation derivation
-        vec actDeriv = dp->activationFn(curr->preActivations, dp->numNodes, ACTIVATION_DERIVATIVE);
-        smallDelta = vec_elem_mul(smallDelta, actDeriv, dp->numNodes);
-        vec_free(actDeriv);
-    }
+    vec actDeriv = dp->activationFn(curr->preActivations, dp->numNodes, FUNCS_DERIVATIVE);
+    vec smallDelta = vec_elem_mul(previousSmallDelta, actDeriv, dp->numNodes);
 
     // calculate nextSmallDelta
     mat weights_t = mat_transpose(dp->weights, dp->numNodes, dp->numInputs);
