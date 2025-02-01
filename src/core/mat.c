@@ -70,11 +70,24 @@ mat mat_elem_add_mul(mat m1, mat m2, param_t factor, int rows, int cols)
     {
         for (int c = 0; c < cols; c++)
         {
-            o[r][c] = m1[r][c] + m2[r][c];
+            o[r][c] = m1[r][c] + m2[r][c] * factor;
         }
     }
     return o;
 }
+mat mat_elem_sub_mul(mat m1, mat m2, param_t subFactor, int rows, int cols)
+{
+    mat o = mat_alloc(rows, cols);
+    for (int r = 0; r < rows; r++)
+    {
+        for (int c = 0; c < cols; c++)
+        {
+            o[r][c] = m1[r][c] - m2[r][c] * subFactor;
+        }
+    }
+    return o;
+}
+
 mat mat_elem_add(mat m1, mat m2, int rows, int cols)
 {
     mat o = mat_alloc(rows, cols);

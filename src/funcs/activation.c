@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <math.h>
 
 #include "core.h"
@@ -13,6 +14,10 @@ vec av_heaviside(vec v, int n, int activationMode)
             o[i] = v[i] >= 0;
         }
     }
+    else
+    {
+        perror("Not existent (or feel free to implement the dirac delta function).");
+    }
     return o;
 }
 
@@ -25,6 +30,13 @@ vec av_logistic(vec v, int n, int activationMode)
         for (int i = 0; i < n; i++)
         {
             o[i] = 1.0 / (1.0 + exp(-v[i]));
+        }
+    }
+    else
+    {
+        for (int i = 0; i < n; i++)
+        {
+            o[i] = v[i] * (1 - v[i]);
         }
     }
     return o;

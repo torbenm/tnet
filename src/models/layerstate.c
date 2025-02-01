@@ -13,20 +13,24 @@ struct forwardstate *forwardstate_alloc(int nOutputs)
 
 void forwardstate_free(struct forwardstate *i)
 {
-    vec_free(i->activations);
-    vec_free(i->preActivations);
-    free(i);
+    // vec_free(i->activations);
+    // vec_free(i->preActivations);
+    // free(i);
 }
 
-struct backwardstate *backwardstate_alloc()
+struct backwardstate *backwardstate_alloc(int numNodes)
 {
-    return malloc(sizeof(struct backwardstate));
+    struct backwardstate *bs = malloc(sizeof(struct backwardstate));
+    bs->numNodes = numNodes;
+    return bs;
 }
 
 void backwardstate_free(struct backwardstate *i)
 {
-    vec_free(i->bias_gradients);
-    // TODO mat_free(i->weight_gradients);
-    vec_free(i->delta);
+    if (i == NULL)
+        return;
+    vec_free(i->biasDelta);
+    mat_free(i->weightDelta, i->numNodes);
+    vec_free(i->smallDelta);
     free(i);
 }

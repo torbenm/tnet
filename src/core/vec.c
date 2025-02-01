@@ -68,6 +68,25 @@ void vec_norm(vec v, int n)
         v[i] = v[i] / vec_len;
     }
 }
+vec vec_elem_sub_mul(vec a, vec b, param_t subFactor, int n)
+{
+    vec r = vec_alloc(n);
+    for (int i = 0; i < n; i++)
+    {
+        r[i] = a[i] - subFactor * b[i];
+    }
+    return r;
+}
+
+vec vec_elem_add_mul(vec a, vec b, param_t factor, int n)
+{
+    vec r = vec_alloc(n);
+    for (int i = 0; i < n; i++)
+    {
+        r[i] = a[i] + factor * b[i];
+    }
+    return r;
+}
 
 vec vec_elem_sub(vec a, vec b, int n)
 {

@@ -15,6 +15,7 @@ struct seqmodel_layer *input_layer_init(int numInputs)
     l->numOutputs = numInputs;
     l->forward = input_layer_forward;
     l->backward = input_layer_backward;
+    l->update = input_layer_update_weights;
     return l;
 }
 
@@ -32,7 +33,12 @@ vec input_layer_forward(void *p, vec inputs, struct forwardstate *state)
     return inputs;
 }
 
-vec input_layer_backward(void *p, vec previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate, int isOutputLayer)
+struct backwardstate *input_layer_backward(void *p, vec previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate, int isOutputLayer)
 {
     return NULL; // should _not_ be used!
+}
+
+void input_layer_update_weights(void *p, struct backwardstate *bs, param_t updateFactor)
+{
+    // NOOP
 }

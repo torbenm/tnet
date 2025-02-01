@@ -20,6 +20,8 @@ struct optimizer *opt_sgd_init(param_t learningRate, lossfunc *lossFn)
 
 param_t opt_sgd(struct seqmodel *seq, param_t *params, int numExamples, vec inputs[numExamples], vec truths[numExamples], lossfunc *lossFn)
 {
+    setbuf(stdout, 0);
+
     struct forwardstate **forwardstates = malloc(numExamples * sizeof(struct forwardstate *));
     vec predictions[numExamples];
 
@@ -30,7 +32,7 @@ param_t opt_sgd(struct seqmodel *seq, param_t *params, int numExamples, vec inpu
      */
     for (int t = 0; t < numExamples; t++)
     {
-        forwardstates[t] = malloc((seq->numLayers + 1) * sizeof(struct forwardstate));
+        forwardstates[t] = malloc((seq->numLayers) * sizeof(struct forwardstate));
         for (int l = 0; l < seq->numLayers; l++)
         {
             if (l == 0)
@@ -47,19 +49,40 @@ param_t opt_sgd(struct seqmodel *seq, param_t *params, int numExamples, vec inpu
     for (int t = 0; t < numExamples; t++)
     {
         vec nextDelta = vec_elem_sub(predictions[t], truths[t], seq->layers[seq->numLayers - 1]->numOutputs);
+
+        struct backwardstate **backwardstates = malloc(seq->numLayers * sizeof(struct backwardstate *));
+
+        // Calculate deltas pass
         for (int l = seq->numLayers - 1; l >= 0; l--)
         {
             struct forwardstate *prev = NULL;
             if (l > 0)
                 prev = &forwardstates[t][l - 1];
-            nextDelta = seq->layers[l]->backward(
+            backwardstates[l] = seq->layers[l]->backward(
                 seq->layers[l]->layerProps,
                 nextDelta,
                 &forwardstates[t][l],
                 prev,
                 learningRate,
                 (l == (seq->numLayers - 1)));
+
+            if (backwardstates[l] != NULL)
+                nextDelta = backwardstates[l]->smallDelta;
         }
+
+        // Apply deltas pass
+        for (int l = 0; l < seq->numLayers; l++)
+        {
+            seq->layers[l]->update(
+                seq->layers[l]->layerProps,
+                backwardstates[l],
+                (1.0 / (param_t)numExamples) * learningRate);
+            // free memory - not needed any longer
+            backwardstate_free(backwardstates[l]);
+            forwardstate_free(&forwardstates[t][l]);
+        }
+        free(backwardstates);
+        free(forwardstates[t]);
     }
 
     /**
