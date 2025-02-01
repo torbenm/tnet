@@ -20,7 +20,7 @@ model.add(tf.keras.layers.Dense(2, activation=tf.keras.activations.tanh))
 model.add(tf.keras.layers.Dense(2, activation=tf.keras.activations.softmax))
 
 # Compile the model
-model.compile(optimizer=tf.keras.optimizers.SGD(learning_rate=0.1, momentum=0.0), loss=tf.keras.losses.MeanSquaredError(), metrics=['mse', 'binary_accuracy'])
+model.compile(optimizer=tf.keras.optimizers.SGD(learning_rate=0.1, momentum=0.9), loss=tf.keras.losses.MeanSquaredError(), metrics=['mse', 'binary_accuracy'])
 model.summary()
 
 history = model.fit(x, y, batch_size=1, epochs=500)
