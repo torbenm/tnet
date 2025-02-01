@@ -46,7 +46,7 @@ param_t opt_sgd(struct seqmodel *seq, param_t *params, int numExamples, vec inpu
      */
     for (int t = 0; t < numExamples; t++)
     {
-        vec nextDelta = vec_elem_sub(truths[t], predictions[t], seq->layers[seq->numLayers - 1]->numOutputs);
+        vec nextDelta = vec_elem_sub(predictions[t], truths[t], seq->layers[seq->numLayers - 1]->numOutputs);
         for (int l = seq->numLayers - 1; l >= 0; l--)
         {
             struct forwardstate *prev = NULL;

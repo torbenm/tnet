@@ -62,14 +62,14 @@ vec dense_layer_backward(void *p, vec previousSmallDelta, struct forwardstate *c
     vec nextSmallDelta = mat_dot_product(weights_t, smallDelta, dp->numInputs, dp->numNodes);
 
     // why positive 1.0?
-    mat deltaW = vec_transposed_vec_mul(smallDelta, prev->activations, 1.0 * learningRate, dp->numNodes, dp->numInputs);
+    mat deltaW = vec_transposed_vec_mul(smallDelta, prev->activations, -1.0 * learningRate, dp->numNodes, dp->numInputs);
 
     mat newWeights = mat_elem_add(dp->weights, deltaW, dp->numNodes, dp->numInputs);
 
     mat_free(dp->weights, dp->numNodes);
     dp->weights = newWeights;
 
-    vec newB = vec_elem_add(dp->bias, smallDelta, dp->numNodes);
+    vec newB = vec_elem_sub(dp->bias, smallDelta, dp->numNodes);
     vec_free(dp->bias);
     dp->bias = newB;
 
