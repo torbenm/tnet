@@ -50,9 +50,8 @@ vec dense_layer_forward(void *p, vec inputs, struct forwardstate *state)
 void dense_layer_update_weights(void *p, struct backwardstate *bs, param_t updateFactor)
 {
     struct denselayer_props *dp = (struct denselayer_props *)p;
-    mat newWeights = mat_elem_add_mul(dp->weights, bs->weightDelta, updateFactor, dp->numNodes, dp->numInputs);
-    vec newBias = vec_elem_add_mul(dp->bias, bs->biasDelta, updateFactor, dp->numNodes);
-
+    mat newWeights = mat_elem_sub_mul(dp->weights, bs->weightGradients, updateFactor, dp->numNodes, dp->numInputs);
+    vec newBias = vec_elem_sub_mul(dp->bias, bs->biasGradients, updateFactor, dp->numNodes);
     vec_free(dp->bias);
     mat_free(dp->weights, dp->numNodes);
 
@@ -63,7 +62,7 @@ void dense_layer_update_weights(void *p, struct backwardstate *bs, param_t updat
 struct backwardstate *dense_layer_backward(void *p, vec previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate, int isOutputLayer)
 {
     struct denselayer_props *dp = (struct denselayer_props *)p;
-    struct backwardstate *bs = backwardstate_alloc(dp->numNodes);
+    struct backwardstate *bs = backwardstate_alloc(dp->numNodes, dp->numInputs);
 
     vec smallDelta = previousSmallDelta; // only one dimension for dense_layer
     if (!isOutputLayer)
@@ -80,9 +79,9 @@ struct backwardstate *dense_layer_backward(void *p, vec previousSmallDelta, stru
     mat_free(weights_t, dp->numNodes);
     bs->smallDelta = nextSmallDelta;
 
-    mat deltaW = vec_transposed_vec_mul(smallDelta, prev->activations, -1.0, dp->numNodes, dp->numInputs);
-    bs->weightDelta = deltaW;
-    bs->biasDelta = vec_mul_const(smallDelta, -1.0, dp->numNodes);
+    mat deltaW = vec_transposed_vec_mul(smallDelta, prev->activations, 1.0, dp->numNodes, dp->numInputs);
+    bs->weightGradients = deltaW;
+    bs->biasGradients = vec_mul_const(smallDelta, 1.0, dp->numNodes);
 
     return bs;
 }

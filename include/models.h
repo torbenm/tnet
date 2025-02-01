@@ -16,13 +16,15 @@ void forwardstate_free(struct forwardstate *);
 struct backwardstate
 {
     int numNodes;
-    mat weightDelta;
-    vec biasDelta;
+    int numInputs;
+    mat weightGradients;
+    vec biasGradients;
     vec smallDelta;
 };
 
-struct backwardstate *backwardstate_alloc(int numNodes);
+struct backwardstate *backwardstate_alloc(int numNodes, int numInputs);
 void backwardstate_free(struct backwardstate *);
+void backwardstate_incorporate(struct backwardstate *dst, struct backwardstate *src, param_t factor);
 
 struct perceptron
 {

@@ -19,7 +19,7 @@ make
 After building, run the following for an MLP XOR example:
 
 ```
-.bin/tnet mlp xor
+.bin/tnet seq xor
 ```
 
 Other Options are `perceptron or`, `perceptron and`, `perceptron xor`.

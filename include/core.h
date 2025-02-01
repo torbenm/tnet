@@ -11,6 +11,7 @@ mat mat_alloc_rand(int rows, int cols);
 void mat_free(mat m, int rows);
 mat mat_transpose(mat m, int rows, int cols);
 vec mat_dot_product(mat m, vec v, int rows, int cols);
+mat mat_mul_const(mat m, param_t factor, int rows, int cols);
 mat mat_elem_add(mat m1, mat m2, int rows, int cols);
 mat mat_elem_sub(mat m1, mat m2, int rows, int cols);
 mat mat_elem_sub_mul(mat m1, mat m2, param_t subFactor, int rows, int cols);
