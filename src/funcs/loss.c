@@ -1,7 +1,7 @@
 #include <math.h>
 
-#include "tnet.h"
-#include "loss.h"
+#include "core.h"
+#include "funcs.h"
 
 param_t loss_mse(int numExamples, int vecSize, vec predictions[numExamples], vec truths[numExamples])
 {

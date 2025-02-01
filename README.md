@@ -2,7 +2,24 @@
 
 Some easy neural network implementations in c.
 
-To run it, execute `make bin/cli` and then run `./bin/cli`. It supports the following arguments:
+## Dependencies
 
-- `perceptron` - perceptron examples for "or", "and", and "xor". pass what you want to execute as second arg.
-- `mlp` - multilayer perceptron
+- Cmake (install with `brew install cmake`)
+- Probably just works on MacOS
+
+## Building
+
+```
+cmake .
+make
+```
+
+## Running
+
+After building, run the following for an MLP XOR example:
+
+```
+.bin/tnet mlp xor
+```
+
+Other Options are `perceptron or`, `perceptron and`, `perceptron xor`.

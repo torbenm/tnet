@@ -2,9 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "perceptron_ex.h"
-#include "mlp_ex.h"
-#include "tnet.h"
+#include "examples.h"
+#include "core.h"
 
 struct clifunc
 {

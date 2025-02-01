@@ -1,5 +1,7 @@
-#include "tnet.h"
+#pragma once
 
+// Base Types
+typedef double param_t;
 typedef param_t **mat;
 typedef param_t *vec;
 
@@ -34,3 +36,9 @@ void vec_print(vec v, int n);
 
 // Vector - In-Place
 void vec_apply_ip(vec v, param_t (*applyFn)(param_t), int n);
+
+// tnet init
+void tnet_init();
+
+// Utils
+param_t prand();

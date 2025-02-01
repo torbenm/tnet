@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "mat.h"
-#include "intermediate.h"
+#include "core.h"
+#include "models.h"
 
 struct intermediate *intermediate_alloc(int nOutputs)
 {

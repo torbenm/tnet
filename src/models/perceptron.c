@@ -3,11 +3,9 @@
 #include <string.h>
 #include <math.h>
 
-#include "activation.h"
-#include "tnet.h"
-#include "perceptron.h"
-#include "util.h"
-#include "mat.h"
+#include "core.h"
+#include "models.h"
+#include "funcs.h"
 
 #define LEARNING_RATE 0.1
 

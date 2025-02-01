@@ -1,8 +1,7 @@
 #include <math.h>
 
-#include "tnet.h"
-#include "activation.h"
-#include "mat.h"
+#include "core.h"
+#include "funcs.h"
 
 vec av_heaviside(vec v, int n, int activationMode)
 {

@@ -3,9 +3,9 @@
 #include <string.h>
 #include <math.h>
 
-#include "activation.h"
-#include "tnet.h"
-#include "perceptron.h"
+#include "core.h"
+#include "models.h"
+#include "train.h"
 
 #define LEARNING_RATE 0.1
 

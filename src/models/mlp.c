@@ -1,11 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "mlp.h"
-#include "tnet.h"
-#include "loss.h"
-#include "layer.h"
-#include "intermediate.h"
+#include "core.h"
+#include "models.h"
+#include "funcs.h"
 
 struct mlp *mlp_init(int numInputs, int numOutputs, int numHiddenLayers, int numParams[numHiddenLayers])
 {
@@ -19,10 +17,10 @@ struct mlp *mlp_init(int numInputs, int numOutputs, int numHiddenLayers, int num
     int numWeights = numInputs;
     for (int i = 0; i < numHiddenLayers; i++)
     {
-        p->layers[i] = layer_init(numParams[i], numWeights, av_relu);
+        p->layers[i] = layer_init(numParams[i], numWeights, av_tanh);
         numWeights = numParams[i];
     }
-    p->layers[numHiddenLayers] = layer_init(numOutputs, numWeights, av_sigmoid);
+    p->layers[numHiddenLayers] = layer_init(numOutputs, numWeights, av_softmax);
     return p;
 }
 

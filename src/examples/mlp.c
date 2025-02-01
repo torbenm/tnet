@@ -1,12 +1,13 @@
 #include <stdio.h>
-#include "mlp_ex.h"
-#include "mlp.h"
-#include "optimizer.h"
+
+#include "core.h"
+#include "models.h"
+#include "train.h"
 
 #define COST_THRESHOLD 0.001
 #define DIFF_THRESHOLD 0.000000001
 #define MAX_ITER 100000
-#define LEARNING_RATE 0.01
+#define LEARNING_RATE 0.1
 
 void mlp_forward_print(struct mlp *p, int numVals, vec values[numVals], vec truth[numVals])
 {

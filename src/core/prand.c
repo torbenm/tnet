@@ -1,5 +1,6 @@
 #include <stdlib.h>
-#include "tnet.h"
+
+#include "core.h"
 
 param_t prand()
 {

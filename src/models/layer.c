@@ -1,10 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "layer.h"
-#include "tnet.h"
-#include "intermediate.h"
-#include "mat.h"
+#include "core.h"
+#include "models.h"
+#include "funcs.h"
 
 struct layer *layer_init(int numNodes, int numInputs, activationfunc *activationFn)
 {
@@ -73,7 +72,7 @@ vec layer_backward(struct layer *l, vec previousSmallDelta, param_t learningRate
     // vec_print(nextSmallDelta, l->numInputs);
     // printf("\n");
 
-    // why positive 1.0? LEARNING_RATE missing here
+    // why positive 1.0?
     mat deltaW = vec_transposed_vec_mul(smallDelta, prev->activations, 1.0 * learningRate, l->numNodes, l->numInputs);
     mat newWeights = mat_elem_add(l->weights, deltaW, l->numNodes, l->numInputs);
 
