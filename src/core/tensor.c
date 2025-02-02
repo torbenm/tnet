@@ -230,6 +230,8 @@ tensor *t_collapse_sum(tensor *t, int collapseDimIdx)
 
     if (collapseDimIdx < 0)
         collapseDimIdx = t->ndim - 1;
+    else if (collapseDimIdx >= t->ndim)
+        perror("Trying to collapse across non-existing dimension.");
 
     int collapsedShape[t->ndim - 1];
     int collapsedShapeIdx = 0;
