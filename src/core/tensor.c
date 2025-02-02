@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include "core.h"
 
 void _assert_shape_equals(tensor *t1, tensor *t2)
@@ -17,6 +19,11 @@ void _assert_shape_equals(tensor *t1, tensor *t2)
     }
 }
 
+int is_single_tensor(tensor *t)
+{
+    return t->ndim == 1 && t->shape[0] == 1;
+}
+
 tensor *t_alloc(int ndim, const int shape[ndim])
 {
     tensor *t = malloc(sizeof(tensor));
@@ -28,8 +35,14 @@ tensor *t_alloc(int ndim, const int shape[ndim])
         t->shape[i] = shape[i];
     }
     t->ndim = ndim;
-    t->v = malloc(sizeof(param_t) * t->_v_size);
+    t->v = calloc(t->_v_size, sizeof(param_t));
     return t;
+}
+
+tensor *t_alloc_single()
+{
+    int shape[1] = {1};
+    return t_alloc(1, shape);
 }
 
 void t_init_rand(tensor *t)
@@ -40,12 +53,20 @@ void t_init_rand(tensor *t)
     }
 }
 
+void t_init_const(tensor *t, const param_t cnst)
+{
+    for (int i = 0; i < t->_v_size; i++)
+    {
+        t->v[i] = cnst;
+    }
+}
+
 tensor *t_copy(tensor *t)
 {
     tensor *c = t_alloc(t->ndim, t->shape);
-    for (int i = 0; i < t->_v_size; i++)
+    for (int i = 0; i < c->_v_size; i++)
     {
-        t->v[i] = c->v[i];
+        c->v[i] = t->v[i];
     }
     return c;
 }
@@ -114,115 +135,166 @@ tensor *t_from_3dim_array(int d1_size, int d2_size, int d3_size, param_t array[d
  * keep the destination in-tact. They do return the destination again however,
  * making it for easier chaining.
  */
-tensor *t_elem_add(tensor *dst, tensor *add)
+param_t _add(param_t a, param_t b) { return a + b; }
+param_t _sub(param_t a, param_t b) { return a - b; }
+param_t _mul(param_t a, param_t b) { return a * b; }
+param_t _div(param_t a, param_t b) { return a / b; }
+
+tensor *_t_const_apply(tensor *dst, param_t cnst, param_t (*fn)(param_t, param_t))
 {
-    _assert_shape_equals(dst, add);
-    // faster if we just iterate over _v_size than the dimensions
     for (int i = 0; i < dst->_v_size; i++)
     {
-        dst->v[i] += add->v[i];
+        dst->v[i] = fn(dst->v[i], cnst);
     }
     return dst;
+}
+
+tensor *_t_elem_apply(tensor *dst, tensor *snd, param_t (*fn)(param_t, param_t))
+{
+    if (is_single_tensor(snd)) // if snd is single tensor, we apply the value to all equally (treat it as a scalar)
+        return _t_const_apply(dst, snd->v[0], fn);
+
+    _assert_shape_equals(dst, snd);
+
+    for (int i = 0; i < dst->_v_size; i++)
+    {
+        dst->v[i] = fn(dst->v[i], snd->v[i]);
+    }
+    return dst;
+}
+
+tensor *t_elem_add(tensor *dst, tensor *add)
+{
+    return _t_elem_apply(dst, add, _add);
 }
 
 tensor *t_elem_sub(tensor *dst, tensor *add)
 {
-    _assert_shape_equals(dst, add);
-    // faster if we just iterate over _v_size than the dimensions
-    for (int i = 0; i < dst->_v_size; i++)
-    {
-        dst->v[i] -= add->v[i];
-    }
-    return dst;
+    return _t_elem_apply(dst, add, _sub);
 }
 
 tensor *t_elem_mul(tensor *dst, tensor *add)
 {
-    _assert_shape_equals(dst, add);
-    // faster if we just iterate over _v_size than the dimensions
-    for (int i = 0; i < dst->_v_size; i++)
-    {
-        dst->v[i] *= add->v[i];
-    }
-    return dst;
+    return _t_elem_apply(dst, add, _mul);
 }
 
 tensor *t_elem_div(tensor *dst, tensor *add)
 {
-    _assert_shape_equals(dst, add);
-    // faster if we just iterate over _v_size than the dimensions
-    for (int i = 0; i < dst->_v_size; i++)
-    {
-        dst->v[i] /= add->v[i];
-    }
-    return dst;
+    return _t_elem_apply(dst, add, _div);
 }
 
 tensor *t_add_const(tensor *dst, param_t cnst)
 {
-    // faster if we just iterate over _v_size than the dimensions
-    for (int i = 0; i < dst->_v_size; i++)
-    {
-        dst->v[i] += cnst;
-    }
-    return dst;
+    return _t_const_apply(dst, cnst, _add);
 }
 
 tensor *t_sub_const(tensor *dst, param_t cnst)
 {
-    // faster if we just iterate over _v_size than the dimensions
-    for (int i = 0; i < dst->_v_size; i++)
-    {
-        dst->v[i] -= cnst;
-    }
-    return dst;
+    return _t_const_apply(dst, cnst, _sub);
 }
 
 tensor *t_mul_const(tensor *dst, param_t cnst)
 {
-    // faster if we just iterate over _v_size than the dimensions
-    for (int i = 0; i < dst->_v_size; i++)
-    {
-        dst->v[i] *= cnst;
-    }
-    return dst;
+    return _t_const_apply(dst, cnst, _mul);
 }
 
 tensor *t_div_const(tensor *dst, param_t cnst)
 {
-    // faster if we just iterate over _v_size than the dimensions
+    return _t_const_apply(dst, cnst, _div);
+}
+
+tensor *t_apply(tensor *dst, param_t (*applyFn)(param_t))
+{
     for (int i = 0; i < dst->_v_size; i++)
     {
-        dst->v[i] /= cnst;
+        dst->v[i] = applyFn(dst->v[i]);
     }
     return dst;
 }
 
 // Reducing actions
-tensor *t_collapse_sum(tensor *t)
+/**
+ * Collapses tensor across the given dim.
+ * Either the dim index (0, 1, ...) or -1 for the last dim.
+ */
+tensor *t_collapse_sum(tensor *t, int collapseDimIdx)
 {
-    // Collapses along the last axis
-    // Calculate shape of new tensor
-    // for (int d = 0; d < t->ndim; d++)
-    // {
-    // }
+    if (t->ndim == 1)
+    {
+        // special case: we only have one dimension, simply adding all up
+        tensor *collapsed = t_alloc_single();
+        for (int i = 0; i < t->_v_size; i++)
+            collapsed->v[0] += t->v[i];
+        return collapsed;
+    }
+
+    if (collapseDimIdx < 0)
+        collapseDimIdx = t->ndim - 1;
+
+    int collapsedShape[t->ndim - 1];
+    int collapsedShapeIdx = 0;
+    for (int d = 0; d < t->ndim; d++)
+    {
+        if (d != collapseDimIdx)
+            collapsedShape[collapsedShapeIdx++] = t->shape[d];
+    }
+
+    tensor *collapsed = t_alloc(t->ndim - 1, collapsedShape);
+    for (int i = 0; i < t->_v_size; i++)
+    {
+        int collapsedIdx = 0;
+        int collapsedDimIdx = 0;
+        int rem = i;
+
+        // Calculate the index in the collapsed array
+        // by first calculating the dimension indices
+        // and then translating them to the new one
+        for (int d = 0; d < t->ndim; d++)
+        {
+            int d_idx = -1;
+            // Calculate dimension indicies of the old matrix
+            if (d < t->ndim - 1)
+            {
+                d_idx = rem / t->shape[d + 1];
+                rem -= d_idx * t->shape[d + 1];
+            }
+            else
+            {
+                d_idx = rem;
+            }
+
+            // calculate index of the new matrix & skipping dimIdx
+            if (d != collapseDimIdx)
+            {
+                if (collapsedDimIdx < collapsed->ndim - 1)
+                {
+                    collapsedIdx += collapsed->shape[collapsedDimIdx + 1] * d_idx;
+                }
+                else
+                {
+                    collapsedIdx += d_idx;
+                }
+                collapsedDimIdx++;
+            }
+        }
+        collapsed->v[collapsedIdx] += t->v[i]; // adding since we are summing
+    }
+
+    return collapsed;
 }
 
 /**
  * Utils
  */
-/*
-Returns a dimension-referencing integer (bitwise) to target certain dimensions
-e.g. the third dimension equals the third bit to be '1' aka 0...100 (=8)
-See also the T_DIM_x constants
-*/
-int t_dim(int dim)
-{
-    return 1 << (dim - 1);
-}
-
 void t_print(tensor *t)
 {
+    if (t->ndim == 1 && t->shape[0] == 1)
+    {
+        // single element tensor
+        printf("%.4f", t->v[0]);
+        return;
+    }
+
     int *dims_ptr = calloc(t->ndim, sizeof(int));
     for (int i = 0; i < t->_v_size; i++)
     {

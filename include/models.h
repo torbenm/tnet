@@ -26,33 +26,18 @@ struct backwardstate *backwardstate_alloc(int numNodes, int numInputs);
 void backwardstate_free(struct backwardstate *);
 void backwardstate_incorporate(struct backwardstate *dst, struct backwardstate *src, param_t factor);
 
-struct perceptron
-{
-    param_t bias;
-    vec weights;
-    int numWeights;
-    activationfunc *activationFn;
-};
-
-vec perceptron_forward(struct perceptron *p, vec vals);
-int perceptron_train(struct perceptron *p, int maxIter, int numTVals, mat tvals, vec truth, param_t learningRate);
-struct perceptron *perceptron_init(int numWeights);
-void perceptron_free(struct perceptron *p);
-void perceptron_forward_print(struct perceptron *p, int numVals, mat values, vec truth);
-
 // Perceptron - tensor
-struct perceptron_tensor
+struct perceptron
 {
     tensor *bias;
     tensor *weights;
-    activationfunc *activationFn;
+    activationfunc_tensor *activationFn;
 };
 
-tensor *perceptron_tensor_forward(struct perceptron_tensor *p, tensor *vals);
-int perceptron_tensor_train(struct perceptron_tensor *p, int maxIter, int numTVals, mat tvals, vec truth, param_t learningRate);
-struct perceptron_tensor *perceptron_tensor_init(int numWeights);
-void perceptron_tensor_free(struct perceptron_tensor *p);
-void perceptron_tensor_forward_print(struct perceptron_tensor *p, int batchSize, tensor inputs[batchSize], tensor truths[batchSize]);
+tensor *perceptron_forward(struct perceptron *p, tensor *vals);
+int perceptron_train(struct perceptron *p, int maxIter, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], param_t learningRate);
+struct perceptron *perceptron_init(int numWeights);
+void perceptron_free(struct perceptron *p);
 
 /**
  * NEW Seqmodel & its possible models

@@ -9,61 +9,76 @@
 
 #define LEARNING_RATE 0.1
 
-void perceptron_forward_print(struct perceptron *p, int numVals, mat values, vec truth)
+void _perceptron_forward_print(struct perceptron *p, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize])
 {
-    for (int i = 0; i < numVals; i++)
+    for (int i = 0; i < batchSize; i++)
     {
-        vec vals = vec_from_mat_col(i, p->numWeights, values);
         if (i > 0)
-            printf(";\t");
-
-        vec_print(vals, p->numWeights);
+            printf(";\n");
+        t_print(inputs[i]);
         printf("=");
-        vec res = perceptron_forward(p, vals);
-        printf("%.3f(%.3f)", res[0], truth[i]);
+        tensor *res = perceptron_forward(p, inputs[i]);
+        t_print(res);
+        printf(" (truth=");
+        t_print(truths[i]);
+        printf(")");
     }
     printf("\n");
 }
 
+void _perceptron_execute(param_t inputs[4][2], param_t truths[4][1])
+{
+    tensor *t_inputs[4] = {
+        t_from_1dim_array(2, inputs[0]),
+        t_from_1dim_array(2, inputs[1]),
+        t_from_1dim_array(2, inputs[2]),
+        t_from_1dim_array(2, inputs[3]),
+    };
+    tensor *t_truths[4] = {
+        t_from_1dim_array(1, truths[0]),
+        t_from_1dim_array(1, truths[1]),
+        t_from_1dim_array(1, truths[2]),
+        t_from_1dim_array(1, truths[3]),
+    };
+
+    struct perceptron *p = perceptron_init(2);
+    printf("Initial predictions: \n");
+    _perceptron_forward_print(p, 4, t_inputs, t_truths);
+    printf("\nTraining: \n");
+    int usedIter = perceptron_train(p, 100, 4, t_inputs, t_truths, LEARNING_RATE);
+    printf("\nAfter %i Iterations:\n", usedIter);
+    _perceptron_forward_print(p, 4, t_inputs, t_truths);
+}
+
 void perceptron_example_AND()
 {
-    param_t values[4][2] = {{0.0, 0.0},
+    param_t inputs[4][2] = {{0.0, 0.0},
                             {0.0, 1.0},
                             {1.0, 0.0},
                             {1.0, 1.0}};
-    param_t expected[4] = {0.0, 0.0, 0.0, 1.0};
-    struct perceptron *p = perceptron_init(2);
-    int usedIter = perceptron_train(p, 100, 4, mat_from_array(4, 2, values), vec_from_array(4, expected), LEARNING_RATE);
-    printf("After %i Iterations: ", usedIter);
-    perceptron_forward_print(p, 4, mat_from_array(4, 2, values), vec_from_array(4, expected));
+    param_t truths[4][1] = {{0.0}, {0.0}, {0.0}, {1.0}};
+    _perceptron_execute(inputs, truths);
 }
 
 void perceptron_example_OR()
 {
-    param_t values[4][2] = {{0.0, 0.0},
+    param_t inputs[4][2] = {{0.0, 0.0},
                             {0.0, 1.0},
                             {1.0, 0.0},
                             {1.0, 1.0}};
-    param_t expected[4] = {0.0, 1.0, 1.0, 1.0};
+    param_t truths[4][1] = {{0.0}, {1.0}, {1.0}, {1.0}};
 
-    struct perceptron *p = perceptron_init(2);
-    int usedIter = perceptron_train(p, 100, 4, mat_from_array(4, 2, values), vec_from_array(4, expected), LEARNING_RATE);
-    printf("After %i Iterations: ", usedIter);
-    perceptron_forward_print(p, 4, mat_from_array(4, 2, values), vec_from_array(4, expected));
+    _perceptron_execute(inputs, truths);
 }
 
 void perceptron_example_XOR()
 {
 
-    param_t values[4][2] = {{0.0, 0.0},
+    param_t inputs[4][2] = {{0.0, 0.0},
                             {0.0, 1.0},
                             {1.0, 0.0},
                             {1.0, 1.0}};
-    param_t expected[4] = {0.0, 1.0, 1.0, 0.0};
-
-    struct perceptron *p = perceptron_init(2);
-    int usedIter = perceptron_train(p, 100, 4, mat_from_array(4, 2, values), vec_from_array(4, expected), LEARNING_RATE);
-    printf("After %i Iterations: ", usedIter);
-    perceptron_forward_print(p, 4, mat_from_array(4, 2, values), vec_from_array(4, expected));
-    printf("XOR is not supported by Perceptrons! Thus, the result will not be correct.");
+    param_t truths[4][1] = {{0.0}, {1.0}, {1.0}, {0.0}};
+    _perceptron_execute(inputs, truths);
+    printf("Perceptrons cannot learn XOR! Thus, the result will not be correct.\n");
 }

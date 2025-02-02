@@ -1,5 +1,8 @@
 #pragma once
 
+#include "models.h"
+#include "core.h"
+
 // Seqmodel
 void seq_example_XOR();
 
@@ -7,8 +10,3 @@ void seq_example_XOR();
 void perceptron_example_AND();
 void perceptron_example_OR();
 void perceptron_example_XOR();
-
-// Perceptron Tensor
-void perceptron_tensor_example_AND();
-void perceptron_tensor_example_OR();
-void perceptron_tensor_example_XOR();

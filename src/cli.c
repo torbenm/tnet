@@ -29,51 +29,36 @@ int clifunc_iterexec(int numFuncs, struct clifunc *clifuncs[numFuncs], char *fun
             return 0;
         }
     }
-    printf("No such function: %s. Valid values: [", funcName);
+    printf("No such function: %s. Valid values:\n", funcName);
     for (int i = 0; i < numFuncs; i++)
     {
-        if (i > 0)
-            printf(", ");
-        printf("%s", clifuncs[i]->name);
+        printf("- %s\n", clifuncs[i]->name);
     }
-    printf("]\n");
     return 1;
 }
 
-int cli_example(int argc, char **argv, int numFuncs, struct clifuncs *funcs[numFuncs])
+int main(int argc, char **argv)
 {
+    const int numFuncs = 4;
+    struct clifunc *funcs[numFuncs] = {
+        clifunc_init("perceptron-or", perceptron_example_OR),
+        clifunc_init("perceptron-and", perceptron_example_AND),
+        clifunc_init("perceptron-xor", perceptron_example_XOR),
+        clifunc_init("seq-xor", seq_example_XOR),
+    };
+
+    tnet_init();
     if (argc == 2)
     {
         return clifunc_iterexec(numFuncs, funcs, argv[1]);
     }
     else
     {
-        printf("Expected one more argument for which program to run, found %i arguments.\n", argc - 1);
-        return 1;
-    }
-}
-
-int main(int argc, char **argv)
-{
-    tnet_init();
-    if (argc >= 1)
-    {
-        const int numFuncs = 7;
-        struct clifunc *funcs[numFuncs] = {
-            clifunc_init("perceptron-or", perceptron_example_OR),
-            clifunc_init("perceptron-and", perceptron_example_AND),
-            clifunc_init("perceptron-xor", perceptron_example_XOR),
-            clifunc_init("perceptron-tensor-or", perceptron_tensor_example_OR),
-            clifunc_init("perceptron-tensor-and", perceptron_tensor_example_AND),
-            clifunc_init("perceptron-tensor-xor", perceptron_tensor_example_XOR),
-            clifunc_init("seq-xor", seq_example_XOR),
-        };
-
-        return cli_example(argc, argv, numFuncs, funcs);
-    }
-    else
-    {
-        printf("Unknown number of args: %i, more than 1\n", argc);
+        printf("Unknown number of args: %i, only one expected. Valid values:\n", argc - 1);
+        for (int i = 0; i < numFuncs; i++)
+        {
+            printf("- %s\n", funcs[i]->name);
+        }
         return 1;
     }
     return 0;
