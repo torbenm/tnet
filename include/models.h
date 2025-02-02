@@ -40,6 +40,20 @@ struct perceptron *perceptron_init(int numWeights);
 void perceptron_free(struct perceptron *p);
 void perceptron_forward_print(struct perceptron *p, int numVals, mat values, vec truth);
 
+// Perceptron - tensor
+struct perceptron_tensor
+{
+    tensor *bias;
+    tensor *weights;
+    activationfunc *activationFn;
+};
+
+tensor *perceptron_tensor_forward(struct perceptron_tensor *p, tensor *vals);
+int perceptron_tensor_train(struct perceptron_tensor *p, int maxIter, int numTVals, mat tvals, vec truth, param_t learningRate);
+struct perceptron_tensor *perceptron_tensor_init(int numWeights);
+void perceptron_tensor_free(struct perceptron_tensor *p);
+void perceptron_tensor_forward_print(struct perceptron_tensor *p, int batchSize, tensor inputs[batchSize], tensor truths[batchSize]);
+
 /**
  * NEW Seqmodel & its possible models
  */

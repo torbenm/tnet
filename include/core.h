@@ -45,6 +45,49 @@ void vec_print(vec v, int n);
 // Vector - In-Place
 void vec_apply_ip(vec v, param_t (*applyFn)(param_t), int n);
 
+// NEW - Tensor
+typedef struct tensor
+{
+    int ndim;
+    int *shape;
+    int _v_size;
+    param_t *v;
+} tensor;
+
+// Tensor - alloc & init
+tensor *t_alloc(int ndim, const int shape[ndim]);
+tensor *t_copy(tensor *t);
+void t_free(tensor *t);
+void t_init_rand(tensor *t);
+tensor *t_from_1dim_array(int d1_size, param_t array[d1_size]);
+tensor *t_from_2dim_array(int d1_size, int d2_size, param_t array[d1_size][d2_size]);
+tensor *t_from_3dim_array(int d1_size, int d2_size, int d3_size, param_t array[d1_size][d2_size][d3_size]);
+
+// Tensor - Tensor x Tensor elem ops
+tensor *t_elem_add(tensor *dst, tensor *add);
+tensor *t_elem_sub(tensor *dst, tensor *add);
+tensor *t_elem_mul(tensor *dst, tensor *add);
+tensor *t_elem_div(tensor *dst, tensor *add);
+
+// Tensor - const ops
+tensor *t_add_const(tensor *dst, param_t cnst);
+tensor *t_sub_const(tensor *dst, param_t cnst);
+tensor *t_mul_const(tensor *dst, param_t cnst);
+tensor *t_div_const(tensor *dst, param_t cnst);
+
+// Tensor - Dimension Utils
+typedef int dims_t;
+#define T_DIM_1 = 1 << (1 - 1);
+#define T_DIM_2 = 1 << (2 - 1);
+#define T_DIM_3 = 1 << (3 - 1);
+#define T_DIM_4 = 1 << (4 - 1);
+
+dims_t t_dim(int dim);
+
+// Tensor - Collapsing
+tensor *t_collapse_sum(tensor *t);
+void t_print(tensor *t);
+
 // tnet init
 void tnet_init();
 

@@ -42,13 +42,13 @@ int clifunc_iterexec(int numFuncs, struct clifunc *clifuncs[numFuncs], char *fun
 
 int cli_example(int argc, char **argv, int numFuncs, struct clifuncs *funcs[numFuncs])
 {
-    if (argc == 3)
+    if (argc == 2)
     {
-        return clifunc_iterexec(numFuncs, funcs, argv[2]);
+        return clifunc_iterexec(numFuncs, funcs, argv[1]);
     }
     else
     {
-        printf("Expected one more argument for which program to run, found %i arguments.\n", argc - 2);
+        printf("Expected one more argument for which program to run, found %i arguments.\n", argc - 1);
         return 1;
     }
 }
@@ -56,33 +56,24 @@ int cli_example(int argc, char **argv, int numFuncs, struct clifuncs *funcs[numF
 int main(int argc, char **argv)
 {
     tnet_init();
-    if (argc >= 2)
+    if (argc >= 1)
     {
-        if (strcmp(argv[1], "perceptron") == 0)
-        {
-            const int numFuncs = 3;
-            struct clifunc *funcs[numFuncs] = {
-                clifunc_init("or", perceptron_example_OR),
-                clifunc_init("and", perceptron_example_AND),
-                clifunc_init("xor", perceptron_example_XOR)};
-            return cli_example(argc, argv, numFuncs, funcs);
-        }
-        else if (strcmp(argv[1], "seq") == 0)
-        {
-            const int numFuncs = 1;
-            struct clifunc *funcs[numFuncs] = {
-                clifunc_init("xor", seq_example_XOR)};
-            return cli_example(argc, argv, numFuncs, funcs);
-        }
-        else
-        {
-            printf("Unknown command: %s\n", argv[1]);
-            return 1;
-        }
+        const int numFuncs = 7;
+        struct clifunc *funcs[numFuncs] = {
+            clifunc_init("perceptron-or", perceptron_example_OR),
+            clifunc_init("perceptron-and", perceptron_example_AND),
+            clifunc_init("perceptron-xor", perceptron_example_XOR),
+            clifunc_init("perceptron-tensor-or", perceptron_tensor_example_OR),
+            clifunc_init("perceptron-tensor-and", perceptron_tensor_example_AND),
+            clifunc_init("perceptron-tensor-xor", perceptron_tensor_example_XOR),
+            clifunc_init("seq-xor", seq_example_XOR),
+        };
+
+        return cli_example(argc, argv, numFuncs, funcs);
     }
     else
     {
-        printf("Unknown number of args: %i, more than 2\n", argc);
+        printf("Unknown number of args: %i, more than 1\n", argc);
         return 1;
     }
     return 0;
