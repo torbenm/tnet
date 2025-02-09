@@ -6,16 +6,23 @@
 
 struct forwardstate *forwardstate_alloc(int nOutputs)
 {
-    struct forwardstate *i = malloc(sizeof(struct forwardstate));
+    struct forwardstate *i = mm_alloc(sizeof(struct forwardstate));
     i->nOutputs = nOutputs;
     return i;
 }
 
 void forwardstate_free(struct forwardstate *i)
 {
-    // vec_free(i->activations);
-    // vec_free(i->preActivations);
-    // free(i);
+    t_free(i->activations);
+    t_free(i->preActivations);
+    mm_free(i);
+}
+
+void forwardstate_dodge(struct forwardstate *f)
+{
+    mm_dodge(f);
+    t_dodge(f->activations);
+    t_dodge(f->preActivations);
 }
 
 void forwardstate_lock(struct forwardstate *f)
@@ -26,7 +33,7 @@ void forwardstate_lock(struct forwardstate *f)
 
 struct backwardstate *backwardstate_alloc(int numNodes, int numInputs)
 {
-    struct backwardstate *bs = malloc(sizeof(struct backwardstate));
+    struct backwardstate *bs = mm_alloc(sizeof(struct backwardstate));
     bs->numNodes = numNodes;
     bs->numInputs = numInputs;
     return bs;
@@ -42,6 +49,16 @@ struct backwardstate *backwardstate_copy(struct backwardstate *src)
     return dst;
 }
 
+void backwardstate_dodge(struct backwardstate *b)
+{
+    if (b == NULL)
+        return;
+    mm_dodge(b);
+    t_dodge(b->biasGradients);
+    t_dodge(b->weightGradients);
+    t_dodge(b->smallDelta);
+}
+
 void backwardstate_incorporate(struct backwardstate *dst, struct backwardstate *src, param_t factor)
 {
     if (src == NULL)
@@ -50,6 +67,8 @@ void backwardstate_incorporate(struct backwardstate *dst, struct backwardstate *
     {
         dst->numInputs = src->numInputs;
         dst->numNodes = src->numNodes;
+        t_free(dst->weightGradients);
+        t_free(dst->biasGradients);
         dst->weightGradients = t_mul_const(t_copy(src->weightGradients), factor);
         dst->biasGradients = t_mul_const(t_copy(src->biasGradients), factor);
     }
@@ -71,7 +90,7 @@ void backwardstate_free(struct backwardstate *i)
     t_free(i->biasGradients);
     t_free(i->weightGradients);
     t_free(i->smallDelta);
-    free(i);
+    mm_free(i);
 }
 
 void backwardstate_lock(struct backwardstate *b)

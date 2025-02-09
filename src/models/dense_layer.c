@@ -7,7 +7,7 @@
 
 struct seqmodel_layer *dense_layer_init(int numNodes, int numInputs, activationfunc *activationFn)
 {
-    struct denselayer_props *props = malloc(sizeof(struct denselayer_props));
+    struct denselayer_props *props = mm_alloc(sizeof(struct denselayer_props));
     props->numNodes = numNodes;
     props->numInputs = numInputs;
 
@@ -22,13 +22,23 @@ struct seqmodel_layer *dense_layer_init(int numNodes, int numInputs, activationf
     props->activationFn = activationFn;
 
     // move somewhere else...
-    struct seqmodel_layer *l = malloc(sizeof(struct seqmodel_layer));
+    struct seqmodel_layer *l = mm_alloc(sizeof(struct seqmodel_layer));
     l->layerProps = props;
     l->numOutputs = numNodes;
     l->forward = dense_layer_forward;
     l->backward = dense_layer_backward;
     l->update = dense_layer_update_weights;
+    l->dodge = dense_layer_dodge;
     return l;
+}
+
+void dense_layer_dodge(struct seqmodel_layer *self)
+{
+    struct denselayer_props *dp = (struct denselayer_props *)self->layerProps;
+    mm_dodge(self);
+    mm_dodge(self->layerProps);
+    t_dodge(dp->bias);
+    t_dodge(dp->weights);
 }
 
 tensor *dense_layer_forward(void *p, tensor *inputs, struct forwardstate *state)
@@ -36,7 +46,7 @@ tensor *dense_layer_forward(void *p, tensor *inputs, struct forwardstate *state)
     struct denselayer_props *dp = (struct denselayer_props *)p;
 
     // activations = activationFn(weights * input + bias)
-    tensor *dotProduct = t_mul(t_copy(dp->weights), inputs);
+    tensor *dotProduct = t_mul(dp->weights, inputs);
     tensor *preActivations = t_elem_add(t_copy(dotProduct), dp->bias);
     tensor *activations = dp->activationFn(t_copy(preActivations), FUNCS_NORMAL);
 
@@ -81,7 +91,6 @@ struct backwardstate *dense_layer_backward(void *p, tensor *previousSmallDelta, 
     tensor *weights_t = t_transpose(dp->weights, 2);
     tensor *nextSmallDelta = t_mul(weights_t, smallDelta);
 
-    // TODO: this still needs to be implemented properly and thought through
     tensor *activations_t = t_transpose(prev->activations, 1);
 
     tensor *deltaW = t_mul(smallDelta, activations_t);
@@ -89,6 +98,7 @@ struct backwardstate *dense_layer_backward(void *p, tensor *previousSmallDelta, 
     bs->smallDelta = nextSmallDelta;
     bs->weightGradients = deltaW;
     bs->biasGradients = smallDelta;
+
     t_free(weights_t);
     t_free(activations_t);
     t_free(activationDerivative);

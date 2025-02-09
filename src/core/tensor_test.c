@@ -330,6 +330,7 @@ void __run_test(const char *testName, int (*testFn)(void))
     else
         printf(" ❌");
     printf("\n");
+    free(ret);
 }
 
 void tensor_test()

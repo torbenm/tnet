@@ -9,9 +9,9 @@
 
 struct optimizer *opt_sgd_init(param_t learningRate, param_t monumentum, lossfunc *lossFn)
 {
-    struct optimizer *o = malloc(sizeof(struct optimizer));
+    struct optimizer *o = mm_alloc(sizeof(struct optimizer));
     o->numParams = 2;
-    o->params = malloc(o->numParams * sizeof(param_t));
+    o->params = mm_alloc(o->numParams * sizeof(param_t));
     o->params[0] = learningRate;
     o->params[1] = monumentum;
     o->run_opt = opt_sgd;
@@ -19,10 +19,16 @@ struct optimizer *opt_sgd_init(param_t learningRate, param_t monumentum, lossfun
     return o;
 }
 
+void optimizer_dodge(struct optimizer *o)
+{
+    mm_dodge(o);
+    mm_dodge(o->params);
+}
+
 struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], lossfunc *lossFn, struct trainingpass *previouspass)
 {
 
-    struct forwardstate **forwardstates = malloc(batchSize * sizeof(struct forwardstate *));
+    struct forwardstate **forwardstates = mm_alloc(batchSize * sizeof(struct forwardstate *));
     tensor *predictions[batchSize];
 
     param_t learningRate = params[0];
@@ -33,7 +39,7 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
      */
     for (int t = 0; t < batchSize; t++)
     {
-        forwardstates[t] = malloc((seq->numLayers) * sizeof(struct forwardstate));
+        forwardstates[t] = mm_alloc((seq->numLayers) * sizeof(struct forwardstate));
         for (int l = 0; l < seq->numLayers; l++)
         {
             if (l == 0)
@@ -49,13 +55,14 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
      * Backwardpass
      */
 
-    struct backwardstate *globalbackwardstates = malloc(seq->numLayers * sizeof(struct backwardstate));
+    struct backwardstate *globalbackwardstates = mm_alloc(seq->numLayers * sizeof(struct backwardstate));
 
     for (int t = 0; t < batchSize; t++)
     {
         // initialize with derivative of mse (TODO: replace with function call)
         tensor *nextDelta = t_elem_sub(t_copy(predictions[t]), truths[t]);
-        struct backwardstate **localbackwardstates = malloc(seq->numLayers * sizeof(struct backwardstate *));
+
+        struct backwardstate **localbackwardstates = mm_alloc(seq->numLayers * sizeof(struct backwardstate *));
         // Calculate deltas pass
         for (int l = seq->numLayers - 1; l >= 0; l--)
         {
@@ -69,12 +76,14 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
                 prev,
                 learningRate);
 
+            t_free(nextDelta);
+            if (l < seq->numLayers - 1)
+                localbackwardstates[l + 1]->smallDelta = NULL;
+
             if (localbackwardstates[l] != NULL)
-            {
-                t_free(nextDelta);
                 nextDelta = localbackwardstates[l]->smallDelta;
-            }
         }
+        t_free(nextDelta);
         // Apply deltas pass
         for (int l = 0; l < seq->numLayers; l++)
         {
@@ -110,12 +119,16 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
 
             // // free memory - not needed any longer
             backwardstate_free(weightedBs);
-            forwardstate_free(&forwardstates[t][l]);
         }
-        free(localbackwardstates);
-        free(forwardstates[t]);
+        for (int l = 0; l < seq->numLayers; l++)
+        {
+            forwardstate_free(&forwardstates[t][l]);
+            backwardstate_free(localbackwardstates[l]);
+        }
+        mm_free(localbackwardstates);
+        mm_free(forwardstates[t]);
     }
-
+    mm_free(forwardstates);
     /**
      * Prediction pass
      */
@@ -123,5 +136,12 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
     {
         predictions[t] = seqmodel_predict(seq, inputs[t]);
     }
-    return trainingpass_init(lossFn(batchSize, predictions, truths), globalbackwardstates, seq->numLayers);
+
+    struct trainingpass *tp = trainingpass_init(lossFn(batchSize, predictions, truths), globalbackwardstates, seq->numLayers);
+
+    // Free predictions
+    for (int t = 0; t < batchSize; t++)
+        t_free(predictions[t]);
+
+    return tp;
 }

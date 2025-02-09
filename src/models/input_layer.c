@@ -6,17 +6,24 @@
 
 struct seqmodel_layer *input_layer_init(int numInputs)
 {
-    struct inputlayer_props *props = malloc(sizeof(struct inputlayer_props));
+    struct inputlayer_props *props = mm_alloc(sizeof(struct inputlayer_props));
     props->numInputs = numInputs;
 
     // move somewhere else...
-    struct seqmodel_layer *l = malloc(sizeof(struct seqmodel_layer));
+    struct seqmodel_layer *l = mm_alloc(sizeof(struct seqmodel_layer));
     l->layerProps = props;
     l->numOutputs = numInputs;
     l->forward = input_layer_forward;
     l->backward = input_layer_backward;
     l->update = input_layer_update_weights;
+    l->dodge = input_layer_dodge;
     return l;
+}
+
+void input_layer_dodge(struct seqmodel_layer *self)
+{
+    mm_dodge(self->layerProps);
+    mm_dodge(self);
 }
 
 tensor *input_layer_forward(void *p, tensor *inputs, struct forwardstate *state)
@@ -26,8 +33,8 @@ tensor *input_layer_forward(void *p, tensor *inputs, struct forwardstate *state)
     if (state != NULL)
     {
         state->nOutputs = ip->numInputs;
-        state->preActivations = inputs;
-        state->activations = inputs;
+        state->preActivations = t_copy(inputs);
+        state->activations = t_copy(inputs);
     }
 
     return inputs;

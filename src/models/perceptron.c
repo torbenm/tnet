@@ -78,5 +78,5 @@ void perceptron_free(struct perceptron *p)
 {
     t_free(p->bias);
     t_free(p->weights);
-    free(p);
+    mm_free(p);
 }

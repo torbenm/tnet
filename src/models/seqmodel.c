@@ -6,19 +6,29 @@
 
 struct seqmodel *seqmodel_init()
 {
-    struct seqmodel *seq = malloc(sizeof(struct seqmodel));
+    struct seqmodel *seq = mm_alloc(sizeof(struct seqmodel));
     seq->_layerBufferSize = 0;
     seqmodel_resize(seq, SEQMODEL_STD_SIZE);
     return seq;
 }
 
+void seqmodel_dodge(struct seqmodel *seq)
+{
+    mm_dodge(seq);
+    mm_dodge(seq->layers);
+    for (int l = 0; l < seq->numLayers; l++)
+    {
+        seq->layers[l]->dodge(seq->layers[l]);
+    }
+}
+
 void seqmodel_resize(struct seqmodel *seq, int newSize)
 {
-    struct seqmodel_layer **new_layers = malloc((newSize) * sizeof(struct seqmodel_layer *));
+    struct seqmodel_layer **new_layers = mm_alloc((newSize) * sizeof(struct seqmodel_layer *));
     if (seq->_layerBufferSize > 0)
     {
         memcpy(new_layers, seq->layers, seq->_layerBufferSize);
-        free(seq->layers);
+        mm_free(seq->layers);
     }
     seq->_layerBufferSize = newSize;
     seq->layers = new_layers;
@@ -39,7 +49,7 @@ tensor *seqmodel_predict(struct seqmodel *seq, tensor *input)
     {
         tensor *output = seq->layers[i]->forward(seq->layers[i]->layerProps, next_inputs, NULL);
         if (i > 1) // making sure we are not freeing the original inputs
-            free(next_inputs);
+            t_free(next_inputs);
         next_inputs = output;
     }
     return next_inputs;

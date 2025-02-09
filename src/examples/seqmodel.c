@@ -42,7 +42,9 @@ void seq_example_XOR()
 
     for (int i = 0; i < 4; i++)
     {
-        t_print(seqmodel_predict(s, t_from_1dim_array(2, values[i])));
+        tensor *t = seqmodel_predict(s, t_values[i]);
+        t_print(t);
+        t_free(t);
     }
 
     struct optimizer *o = opt_sgd_init(LEARNING_RATE, MONUMENTUM, loss_mse);
@@ -50,6 +52,6 @@ void seq_example_XOR()
 
     for (int i = 0; i < 4; i++)
     {
-        t_print(seqmodel_predict(s, t_from_1dim_array(2, values[i])));
+        t_print(seqmodel_predict(s, t_values[i]));
     }
 }

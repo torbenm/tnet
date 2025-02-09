@@ -105,8 +105,8 @@ tensor *t_add_dim(tensor *t)
  */
 tensor *t_alloc(int ndim, const int shape[ndim])
 {
-    tensor *t = malloc(sizeof(tensor));
-    t->shape = malloc(sizeof(int) * ndim);
+    tensor *t = mm_alloc(sizeof(tensor));
+    t->shape = mm_alloc(sizeof(int) * ndim);
     t->_v_size = 1;
     t->locked = 0;
     for (int i = 0; i < ndim; i++)
@@ -115,8 +115,17 @@ tensor *t_alloc(int ndim, const int shape[ndim])
         t->shape[i] = shape[i];
     }
     t->ndim = ndim;
-    t->v = calloc(t->_v_size, sizeof(param_t));
+    t->v = mm_calloc(t->_v_size, sizeof(param_t));
     return t;
+}
+
+void t_dodge(tensor *t)
+{
+    if (t == NULL)
+        return;
+    mm_dodge(t);
+    mm_dodge(t->v);
+    mm_dodge(t->shape);
 }
 
 tensor *t_alloc_single()
@@ -172,15 +181,15 @@ void t_free(tensor *t)
         return;
     if (t->shape != NULL)
     {
-        free(t->shape);
+        mm_free(t->shape);
         t->shape = NULL;
     }
     if (t->v != NULL)
     {
-        free(t->v);
+        mm_free(t->v);
         t->v = NULL;
     }
-    free(t);
+    mm_free(t);
 }
 
 tensor *t_lock(tensor *t)
@@ -615,7 +624,7 @@ void t_print(tensor *t)
 
     // this will store the multidimensional coords derived from singledimensional coords
     // based on the shape/offsets.
-    int *currentDimsIdx = calloc(t->ndim, sizeof(int));
+    int *currentDimsIdx = mm_calloc(t->ndim, sizeof(int));
 
     // Opening brackets for all dimensions
     for (int d = 0; d < t->ndim; d++)
@@ -666,5 +675,6 @@ void t_print(tensor *t)
     // No need for a closing stack, as we are always all dimensions deep here
     for (int d = 0; d < t->ndim; d++)
         printf("]");
-    free(currentDimsIdx);
+    printf("\n");
+    mm_free(currentDimsIdx);
 }
