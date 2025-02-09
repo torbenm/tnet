@@ -17,7 +17,7 @@ tensor *av_heaviside(tensor *t, int activationMode)
     }
     else
     {
-        perror("Not existent (or feel free to implement the dirac delta function).");
+        error("Not existent (or feel free to implement the dirac delta function).");
     }
     return t;
 }

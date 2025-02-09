@@ -11,13 +11,13 @@ void __assert_shape_equals(tensor *t1, tensor *t2)
 {
     if (t1->ndim != t2->ndim)
     {
-        perror("Shapes are not equal!");
+        error("Shapes are not equal!");
     }
     for (int i = 0; i < t1->ndim; i++)
     {
         if (t1->shape[i] != t2->shape[i])
         {
-            perror("Shapes are not equal!");
+            error("Shapes are not equal!");
         }
     }
 }
