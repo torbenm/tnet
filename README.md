@@ -1,6 +1,6 @@
 # TNET
 
-Some easy neural network implementations in c.
+Some easy neural network implementations in c. Memory management is terrible currently, but does not yet matter at the current sizes of models.
 
 ## Dependencies
 
