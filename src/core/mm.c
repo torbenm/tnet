@@ -8,7 +8,7 @@
  * "Basic" Garbage collector & memory management.
  * All allocated memory is stored in a list of pointers.
  * You may run mm_wipe(); every now and then - this will go through the list of pointers
- * and remove all memory allocations that have not been marked before.
+ * and remove all memory allocations that have not been dodged before.
  */
 
 /**
