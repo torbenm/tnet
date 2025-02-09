@@ -22,8 +22,14 @@ void __assert_shape_equals(tensor *t1, tensor *t2)
     }
 }
 
+void t_assert_not_locked(tensor *t)
+{
+    if (t->locked)
+        error("May not alter tensor in place - tensor is locked.");
+}
+
 // Helper functions for indices
-void __t_calc_strides(tensor *t, int *outStrides)
+void t_calc_strides(tensor *t, int *outStrides)
 {
     // calculates the number of jumps we have to do in the flat index
     // to get to the position of a certain dimension.
@@ -35,7 +41,7 @@ void __t_calc_strides(tensor *t, int *outStrides)
     }
 }
 
-int __t_get_flat_index(tensor *t, int *strides, int *indices)
+int t_get_flat_index(tensor *t, int *strides, int *indices)
 {
     // e.g. for [3, 4, 5] tensor with indices [0, 1, 2]
     // we have strides [20, 5, 1] and want to have
@@ -51,7 +57,7 @@ int __t_get_flat_index(tensor *t, int *strides, int *indices)
     return flatIndex;
 }
 
-void __t_get_indices(tensor *t, int flatIndex, int *strides, int *outIndices)
+void t_get_indices(tensor *t, int flatIndex, int *strides, int *outIndices)
 {
     // e.g. for [3, 4, 5] tensor with flatIndex 57
     // we have strides [20, 5, 1] and want to have
@@ -79,7 +85,7 @@ void __t_copy_shape(tensor *t, int numDimsToCopy, int *outShape)
     __copy_array(t->shape, outShape, numDimsToCopy);
 }
 
-tensor *__add_dim(tensor *t)
+tensor *t_add_dim(tensor *t)
 {
     // adds a dimension which can be useful for
     // transforming vectors into fake matrices. e.g. [5] shape turns into [5, 1] shape.
@@ -102,6 +108,7 @@ tensor *t_alloc(int ndim, const int shape[ndim])
     tensor *t = malloc(sizeof(tensor));
     t->shape = malloc(sizeof(int) * ndim);
     t->_v_size = 1;
+    t->locked = 0;
     for (int i = 0; i < ndim; i++)
     {
         t->_v_size *= shape[i];
@@ -161,6 +168,8 @@ tensor *t_copy(tensor *t)
 
 void t_free(tensor *t)
 {
+    if (t == NULL)
+        return;
     if (t->shape != NULL)
     {
         free(t->shape);
@@ -172,6 +181,14 @@ void t_free(tensor *t)
         t->v = NULL;
     }
     free(t);
+}
+
+tensor *t_lock(tensor *t)
+{
+    if (t == NULL)
+        return t;
+    t->locked = 1;
+    return t;
 }
 
 /**
@@ -194,14 +211,14 @@ tensor *t_from_2dim_array(int d1_size, int d2_size, param_t array[d1_size][d2_si
 
     tensor *t = t_alloc(2, shape);
 
-    __t_calc_strides(t, strides);
+    t_calc_strides(t, strides);
 
     for (indices[0] = 0; indices[0] < shape[0]; indices[0]++)
     {
 
         for (indices[1] = 0; indices[1] < shape[1]; indices[1]++)
         {
-            int flatIdx = __t_get_flat_index(t, strides, indices);
+            int flatIdx = t_get_flat_index(t, strides, indices);
             t->v[flatIdx] = array[indices[0]][indices[1]];
         }
     }
@@ -215,7 +232,7 @@ tensor *t_from_3dim_array(int d1_size, int d2_size, int d3_size, param_t array[d
 
     tensor *t = t_alloc(3, shape);
 
-    __t_calc_strides(t, strides);
+    t_calc_strides(t, strides);
 
     for (indices[0] = 0; indices[0] < shape[0]; indices[0]++)
     {
@@ -223,7 +240,7 @@ tensor *t_from_3dim_array(int d1_size, int d2_size, int d3_size, param_t array[d
         {
             for (indices[2] = 0; indices[2] < shape[2]; indices[2]++)
             {
-                int flatIdx = __t_get_flat_index(t, strides, indices);
+                int flatIdx = t_get_flat_index(t, strides, indices);
                 t->v[flatIdx] = array[indices[0]][indices[1]][indices[2]];
             }
         }
@@ -249,6 +266,8 @@ param_t _div(param_t a, param_t b) { return a / b; }
 
 tensor *_t_const_apply(tensor *dst, param_t cnst, param_t (*fn)(param_t, param_t))
 {
+    t_assert_not_locked(dst);
+
     for (int i = 0; i < dst->_v_size; i++)
     {
         dst->v[i] = fn(dst->v[i], cnst);
@@ -261,6 +280,7 @@ tensor *_t_elem_apply(tensor *dst, tensor *snd, param_t (*fn)(param_t, param_t))
     if (t_is_single_element(snd)) // if snd is single tensor, we apply the value to all equally (treat it as a scalar)
         return _t_const_apply(dst, snd->v[0], fn);
 
+    t_assert_not_locked(dst);
     __assert_shape_equals(dst, snd);
 
     for (int i = 0; i < dst->_v_size; i++)
@@ -312,6 +332,8 @@ tensor *t_div_const(tensor *dst, param_t cnst)
 
 tensor *t_apply(tensor *dst, param_t (*applyFn)(param_t))
 {
+    t_assert_not_locked(dst);
+
     for (int i = 0; i < dst->_v_size; i++)
     {
         dst->v[i] = applyFn(dst->v[i]);
@@ -320,136 +342,6 @@ tensor *t_apply(tensor *dst, param_t (*applyFn)(param_t))
 }
 
 // Tensor multiplication
-
-tensor *__t_mul_mat_x_vec(tensor *mat, tensor *vec)
-{
-    // Matrix x Vector multiplication
-    // Matrix may actually be multi-dimensional tensor,
-    // but we just consider the last two dimensions here.
-
-    // Check last dimension has the same size as the vector
-    if (mat->shape[mat->ndim - 1] != vec->shape[0])
-        error("Matrix and vector do not have compatible shape, with the last dimensions %i != %i.", mat->shape[mat->ndim - 1], vec->shape[0]);
-
-    // Calculate output shape
-    int outputTensorShape[mat->ndim - 1];
-    __t_copy_shape(mat, mat->ndim - 1, outputTensorShape);
-
-    tensor *ot = t_alloc(mat->ndim - 1, outputTensorShape);
-
-    int *currentDimsIdx = calloc(mat->ndim, sizeof(int));
-    int outputIndex = 0;
-    for (int i = 0; i < mat->_v_size; i++)
-    {
-        // update dims index
-        for (int d = mat->ndim - 1; d >= 0; d--)
-        {
-            int oldDimIdx = currentDimsIdx[d];
-            if (i > 0)
-                currentDimsIdx[d] = (currentDimsIdx[d] + 1) % mat->shape[d];
-            if (oldDimIdx < currentDimsIdx[d])
-            {
-                // we are still moving along the same dimension,
-                // so no need to check the other dimensions.
-                break;
-            }
-            else
-            {
-                // if we are in the last dimension with size n currently,
-                // and we switch from coord n to 0 here (basically moving along another dimension now)
-                // we increase the outputIndex. But only if i > 0 (no change in the beginning)
-                if (d == mat->ndim - 1 && i > 0)
-                    outputIndex++;
-            }
-        }
-
-        // multiply with vector based on position of the last dimension
-        ot->v[outputIndex] += mat->v[i] * vec->v[currentDimsIdx[mat->ndim - 1]];
-    }
-    free(currentDimsIdx);
-    return ot;
-}
-
-tensor *__t_mul_mat_x_mat(tensor *matA, tensor *matB)
-{
-    // Matrix x Matrix multiplication
-    // First Matrix may actually be multi-dimensional tensor,
-    // but we just consider the last two dimensions here.
-    // Matrix x Vector multiplication
-    // Matrix may actually be multi-dimensional tensor,
-    // but we just consider the last two dimensions here.
-
-    // // Check last dimension has the same size as the matrix first dimension
-    // if (matA->shape[matA->ndim - 1] != matB->shape[0])
-    //     error("Matrix and vector do not have compatible shape, with the last dimensions %i != %i.", matA->shape[matA->ndim - 1], matB->shape[0]);
-
-    // // Check next to last dimension has the same size as the matrix second dimension
-    // if (matA->shape[matA->ndim - 2] != matB->shape[1])
-    //     error("Matrix and vector do not have compatible shape, with the next to last dimensions %i != %i.", matA->shape[matA->ndim - 2], matB->shape[1]);
-
-    // Calculate output shape
-    int outputTensorShape[matA->ndim];
-    __t_copy_shape(matA, matA->ndim - 1, outputTensorShape);
-
-    // could also be written as `= matA->shape[matA->ndim-1];`
-    outputTensorShape[matA->ndim - 1] = matB->shape[1];
-
-    tensor *ot = t_alloc(matA->ndim, outputTensorShape);
-
-    int *currentDimsIdx = calloc(matA->ndim, sizeof(int));
-    int outputIndexWithoutLastDimension = 0;
-    for (int i = 0; i < matA->_v_size; i++)
-    {
-        // update dims index
-        for (int d = matA->ndim - 1; d >= 0; d--)
-        {
-            int oldDimIdx = currentDimsIdx[d];
-            if (i > 0)
-                currentDimsIdx[d] = (currentDimsIdx[d] + 1) % matA->shape[d];
-            if (oldDimIdx < currentDimsIdx[d])
-            {
-                // we are still moving along the same dimension,
-                // so no need to check the other dimensions.
-                break;
-            }
-            else
-            {
-                // if we are in the last dimension with size n currently,
-                // and we switch from coord n to 0 here (basically moving along another dimension now)
-                // we increase the outputIndex. But only if i > 0 (no change in the beginning)
-                if (d == matA->ndim - 1 && i > 0)
-                    outputIndexWithoutLastDimension++;
-            }
-        }
-
-        // we are now using this value we have here matB->shape[1]-times
-        for (int b = 0; b < matB->shape[1]; b++)
-        {
-            int outputIndex = outputIndexWithoutLastDimension * matB->shape[1] + b;
-            int matBIndex = currentDimsIdx[matA->ndim - 1] * matB->shape[1] + b;
-            ot->v[outputIndex] += matA->v[i] * matB->v[matBIndex];
-        }
-    }
-    free(currentDimsIdx);
-    return ot;
-}
-
-tensor *t_mul__OLD(tensor *a, tensor *b)
-{
-    if (a->ndim < 2)
-        error("First tensor of tensor multiplication must have at least 2 dimensions, found %i instead.", a->ndim);
-    switch (b->ndim)
-    {
-    case 1:
-        return __t_mul_mat_x_vec(a, b);
-    case 2:
-        return __t_mul_mat_x_mat(a, b);
-    default:
-        error("Second tensor of tensor multiplication may currently have at most 2 dimensions, found %i instead.", b->ndim);
-        return NULL; // unreachable
-    }
-}
-
 tensor *t_mul(tensor *a, tensor *b)
 {
     // This whole algorithm could be made easier
@@ -459,14 +351,13 @@ tensor *t_mul(tensor *a, tensor *b)
     // get output shape. We are at most considering the last two dimensions
     // (m x n) * (n x p) = (m x p)
 
-    // TODO: free space...
     tensor *originalA = a;
     tensor *originalB = b;
     if (a->ndim == 1)
-        a = __add_dim(a);
+        a = t_add_dim(a);
 
     if (b->ndim == 1)
-        b = __add_dim(b);
+        b = t_add_dim(b);
 
     int nA, m, nB, p, outputDims;
     nA = a->shape[a->ndim - 1];
@@ -500,13 +391,13 @@ tensor *t_mul(tensor *a, tensor *b)
     tensor *r = t_alloc(outputDims, outputShape);
     int indicesA[a->ndim], indicesB[b->ndim], indicesR[r->ndim], stridesA[a->ndim], stridesB[b->ndim], stridesR[r->ndim];
 
-    __t_calc_strides(a, stridesA);
-    __t_calc_strides(b, stridesB);
-    __t_calc_strides(r, stridesR);
+    t_calc_strides(a, stridesA);
+    t_calc_strides(b, stridesB);
+    t_calc_strides(r, stridesR);
 
     for (int flatIdx = 0; flatIdx < a->_v_size; flatIdx++)
     {
-        __t_get_indices(a, flatIdx, stridesA, indicesA);
+        t_get_indices(a, flatIdx, stridesA, indicesA);
         // formula is r_ik = sum(a_ij * b_jk);
         // with 1 <= i <= m; 1 <= k <= p; 1 <= j <= n(A/B)
         __copy_array(indicesA, indicesR, a->ndim - 2);
@@ -527,19 +418,18 @@ tensor *t_mul(tensor *a, tensor *b)
                 indicesR[r->ndim - 1] = i; // k will always 0
             }
             indicesB[b->ndim - 1] = k;
-            int idxR = __t_get_flat_index(r, stridesR, indicesR);
-            int idxB = __t_get_flat_index(b, stridesB, indicesB);
+            int idxR = t_get_flat_index(r, stridesR, indicesR);
+            int idxB = t_get_flat_index(b, stridesB, indicesB);
             r->v[idxR] += a->v[flatIdx] * b->v[idxB];
         }
     }
 
-    return r;
-}
+    if (originalA->ndim == 1)
+        t_free(a);
+    if (originalB->ndim == 1)
+        t_free(b);
 
-tensor *t_mul_transposed(tensor *a, tensor *b)
-{
-    //
-    return NULL;
+    return r;
 }
 
 tensor *__t_transpose_2dim(tensor *t)
@@ -555,12 +445,12 @@ tensor *__t_transpose_2dim(tensor *t)
 
     tensor *tT = t_alloc(t->ndim, shapeT);
 
-    __t_calc_strides(t, strides);
-    __t_calc_strides(tT, stridesT);
+    t_calc_strides(t, strides);
+    t_calc_strides(tT, stridesT);
 
     for (int flatIdx = 0; flatIdx < t->_v_size; flatIdx++)
     {
-        __t_get_indices(t, flatIdx, strides, idc);
+        t_get_indices(t, flatIdx, strides, idc);
         __copy_array(idc, idcT, unchangedDimensions);
 
         // do the permutation
@@ -568,7 +458,7 @@ tensor *__t_transpose_2dim(tensor *t)
         idcT[t->ndim - 2] = idc[t->ndim - 1];
 
         // store the value in the transposed tensor
-        int flatIdxT = __t_get_flat_index(tT, stridesT, idcT);
+        int flatIdxT = t_get_flat_index(tT, stridesT, idcT);
         tT->v[flatIdxT] = t->v[flatIdx];
     }
     return tT;
@@ -576,38 +466,9 @@ tensor *__t_transpose_2dim(tensor *t)
 
 tensor *__t_transpose_1dim(tensor *t)
 {
-    // 1-dim transposing means adding a virtual size-1 dimension to the output,
-    // thus increasing the output by 1 dimension
-
-    // all variables ending with `T` are the transposed variant.
-    int ndimT = t->ndim + 1;
-    int shapeT[ndimT], idc[t->ndim], idcT[ndimT], strides[t->ndim], stridesT[ndimT];
-    int unchangedDimensions = t->ndim - 1;
-
-    // first, copy all
-    __t_copy_shape(t, unchangedDimensions, shapeT);
-
-    shapeT[ndimT - 1] = t->shape[t->ndim - 1];
-    shapeT[ndimT - 2] = 1; // the virtual dimension
-
-    tensor *tT = t_alloc(ndimT, shapeT);
-
-    __t_calc_strides(t, strides);
-    __t_calc_strides(tT, stridesT);
-
-    for (int flatIdx = 0; flatIdx < t->_v_size; flatIdx++)
-    {
-        __t_get_indices(t, flatIdx, strides, idc);
-        __copy_array(idc, idcT, unchangedDimensions);
-
-        // do the permutation
-        idcT[ndimT - 1] = idc[t->ndim - 1];
-        idcT[ndimT - 2] = 0;
-
-        // store the value in the transposed tensor
-        int flatIdxT = __t_get_flat_index(tT, stridesT, idcT);
-        tT->v[flatIdxT] = t->v[flatIdx];
-    }
+    tensor *with_added_dim = t_add_dim(t);
+    tensor *tT = __t_transpose_2dim(with_added_dim);
+    t_free(with_added_dim);
     return tT;
 }
 

@@ -24,3 +24,12 @@ void trainingpass_free(struct trainingpass *tp)
     }
     free(tp);
 }
+
+void trainingpass_lock(struct trainingpass *tp)
+{
+    for (int l = 0; l < tp->numLayers; l++)
+    {
+        if (&tp->backwardstates[l] != NULL)
+            backwardstate_lock(&tp->backwardstates[l]);
+    }
+}

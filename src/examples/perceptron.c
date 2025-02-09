@@ -29,16 +29,16 @@ void _perceptron_forward_print(struct perceptron *p, int batchSize, tensor *inpu
 void _perceptron_execute(param_t inputs[4][2], param_t truths[4][1])
 {
     tensor *t_inputs[4] = {
-        t_from_1dim_array(2, inputs[0]),
-        t_from_1dim_array(2, inputs[1]),
-        t_from_1dim_array(2, inputs[2]),
-        t_from_1dim_array(2, inputs[3]),
+        t_lock(t_from_1dim_array(2, inputs[0])),
+        t_lock(t_from_1dim_array(2, inputs[1])),
+        t_lock(t_from_1dim_array(2, inputs[2])),
+        t_lock(t_from_1dim_array(2, inputs[3])),
     };
     tensor *t_truths[4] = {
-        t_from_1dim_array(1, truths[0]),
-        t_from_1dim_array(1, truths[1]),
-        t_from_1dim_array(1, truths[2]),
-        t_from_1dim_array(1, truths[3]),
+        t_lock(t_from_1dim_array(1, truths[0])),
+        t_lock(t_from_1dim_array(1, truths[1])),
+        t_lock(t_from_1dim_array(1, truths[2])),
+        t_lock(t_from_1dim_array(1, truths[3])),
     };
 
     struct perceptron *p = perceptron_init(2);

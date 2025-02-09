@@ -14,13 +14,14 @@ typedef param_t *vec;
 // Types
 typedef struct tensor
 {
+    char locked; // whether or not the tensor might be updated in-place
     int ndim;
     int *shape;
     int _v_size; // size of the v array
     param_t *v;
 } tensor;
 
-// alloc & init
+// alloc & init & locking
 tensor *t_alloc(int ndim, const int shape[ndim]);
 tensor *t_alloc_single();
 tensor *t_alloc_single_from(param_t value);
@@ -29,6 +30,8 @@ tensor *t_copy(tensor *t);
 void t_free(tensor *t);
 void t_init_rand(tensor *t);
 void t_init_const(tensor *t, const param_t cnst);
+tensor *t_lock(tensor *t);
+void t_assert_not_locked(tensor *t);
 
 // Utils
 tensor *t_from_1dim_array(int d1_size, param_t array[d1_size]);
@@ -36,7 +39,11 @@ tensor *t_from_2dim_array(int d1_size, int d2_size, param_t array[d1_size][d2_si
 tensor *t_from_3dim_array(int d1_size, int d2_size, int d3_size, param_t array[d1_size][d2_size][d3_size]);
 int t_is_single_element(tensor *t);
 void t_print(tensor *t);
+tensor *t_add_dim(tensor *t);
 void t_print_shape(tensor *t);
+void t_calc_strides(tensor *t, int *outStrides);
+int t_get_flat_index(tensor *t, int *strides, int *indices);
+void t_get_indices(tensor *t, int flatIndex, int *strides, int *outIndices);
 
 // Element wise operations (tensor x tensor and tensor x scalar)
 tensor *t_elem_add(tensor *dst, tensor *add);
@@ -69,9 +76,3 @@ void print_int_array(int *a, int size);
 
 // testing...
 void tensor_test();
-
-// private for testing
-void __t_calc_strides(tensor *t, int *outStrides);
-int __t_get_flat_index(tensor *t, int *strides, int *indices);
-void __t_get_indices(tensor *t, int flatIndex, int *strides, int *outIndices);
-tensor *__add_dim(tensor *t);

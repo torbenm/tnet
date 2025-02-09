@@ -10,6 +10,7 @@ struct trainingpass
 
 struct trainingpass *trainingpass_init(param_t loss, struct backwardstate *backwardstates, int numLayers);
 void trainingpass_free(struct trainingpass *tp);
+void trainingpass_lock(struct trainingpass *tp);
 
 typedef struct trainingpass *opt_func(struct seqmodel *seq, param_t *params, int numExamples, tensor *inputs[numExamples], tensor *truths[numExamples], lossfunc *lossFn, struct trainingpass *previouspass);
 struct optimizer

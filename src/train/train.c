@@ -25,6 +25,7 @@ void train(struct seqmodel *seq, int numExamples, tensor *inputs[numExamples], t
         if (prev_pass != NULL)
             trainingpass_free(prev_pass);
         prev_pass = next_pass;
+        trainingpass_lock(prev_pass);
 
         // Check whether the network is converging...
         converged = fabs(prev_loss - current_loss) < diffThreshold || current_loss < lossThreshold;

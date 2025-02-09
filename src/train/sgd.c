@@ -40,6 +40,7 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
                 seq->layers[l]->forward(seq->layers[l]->layerProps, inputs[t], &forwardstates[t][l]);
             else
                 seq->layers[l]->forward(seq->layers[l]->layerProps, forwardstates[t][l - 1].activations, &forwardstates[t][l]);
+            forwardstate_lock(&forwardstates[t][l]);
         }
         predictions[t] = forwardstates[t][seq->numLayers - 1].activations;
     }
@@ -78,33 +79,37 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
         for (int l = 0; l < seq->numLayers; l++)
         {
 
-            if (monumentum > 0 && previouspass != NULL && localbackwardstates[l] != NULL && &previouspass->backwardstates[l] != NULL)
+            struct backwardstate *weightedBs = backwardstate_copy(localbackwardstates[l]);
+
+            if (monumentum > 0 && previouspass != NULL && weightedBs != NULL && &previouspass->backwardstates[l] != NULL)
             {
                 // previous update weights * monumentum
                 tensor *mon_w_prev = t_mul_const(t_copy(previouspass->backwardstates[l].weightGradients), monumentum);
                 tensor *mon_b_prev = t_mul_const(t_copy(previouspass->backwardstates[l].biasGradients), monumentum);
 
-                t_mul_const(localbackwardstates[l]->weightGradients, 1 - monumentum);
-                t_mul_const(localbackwardstates[l]->biasGradients, 1 - monumentum);
+                t_mul_const(weightedBs->weightGradients, 1 - monumentum);
+                t_mul_const(weightedBs->biasGradients, 1 - monumentum);
 
-                t_elem_add(localbackwardstates[l]->weightGradients, mon_w_prev);
-                t_elem_add(localbackwardstates[l]->biasGradients, mon_b_prev);
+                t_elem_add(weightedBs->weightGradients, mon_w_prev);
+                t_elem_add(weightedBs->biasGradients, mon_b_prev);
 
                 t_free(mon_w_prev);
                 t_free(mon_b_prev);
             }
+            backwardstate_lock(weightedBs); // avoid its properties being altered.
+
             param_t batchSizeFactor = 1.0 / (param_t)batchSize;
 
             seq->layers[l]->update(
                 seq->layers[l]->layerProps,
-                localbackwardstates[l],
+                weightedBs,
                 batchSizeFactor * learningRate);
 
             // // updating the global backwardstate
             backwardstate_incorporate(&globalbackwardstates[l], localbackwardstates[l], batchSizeFactor);
 
             // // free memory - not needed any longer
-            // backwardstate_free(localbackwardstates[l]);
+            backwardstate_free(weightedBs);
             forwardstate_free(&forwardstates[t][l]);
         }
         free(localbackwardstates);

@@ -6,7 +6,7 @@
 
 #define COST_THRESHOLD 0.001
 #define DIFF_THRESHOLD 0.000000001
-#define MAX_ITER 100000
+#define MAX_ITER 10000000
 #define LEARNING_RATE 0.1
 #define MONUMENTUM 0.9
 
@@ -22,17 +22,17 @@ void seq_example_XOR()
     param_t truths[4][2] = {{0.0, 1.0}, {1.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}};
 
     tensor *t_values[4] = {
-        t_from_1dim_array(2, values[0]),
-        t_from_1dim_array(2, values[1]),
-        t_from_1dim_array(2, values[2]),
-        t_from_1dim_array(2, values[3]),
+        t_lock(t_from_1dim_array(2, values[0])),
+        t_lock(t_from_1dim_array(2, values[1])),
+        t_lock(t_from_1dim_array(2, values[2])),
+        t_lock(t_from_1dim_array(2, values[3])),
     };
 
     tensor *t_truths[4] = {
-        t_from_1dim_array(2, truths[0]),
-        t_from_1dim_array(2, truths[1]),
-        t_from_1dim_array(2, truths[2]),
-        t_from_1dim_array(2, truths[3]),
+        t_lock(t_from_1dim_array(2, truths[0])),
+        t_lock(t_from_1dim_array(2, truths[1])),
+        t_lock(t_from_1dim_array(2, truths[2])),
+        t_lock(t_from_1dim_array(2, truths[3])),
     };
 
     struct seqmodel *s = seqmodel_init();

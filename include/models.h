@@ -12,6 +12,7 @@ struct forwardstate
 
 struct forwardstate *forwardstate_alloc(int size);
 void forwardstate_free(struct forwardstate *);
+void forwardstate_lock(struct forwardstate *f);
 
 struct backwardstate
 {
@@ -23,7 +24,9 @@ struct backwardstate
 };
 
 struct backwardstate *backwardstate_alloc(int numNodes, int numInputs);
+struct backwardstate *backwardstate_copy(struct backwardstate *src);
 void backwardstate_free(struct backwardstate *);
+void backwardstate_lock(struct backwardstate *);
 void backwardstate_incorporate(struct backwardstate *dst, struct backwardstate *src, param_t factor);
 
 // Perceptron - tensor

@@ -145,7 +145,7 @@ int test_add_dim()
     tensor *out = t_from_2dim_array(5, 1, matOut);
 
     // act
-    tensor *act = __add_dim(in);
+    tensor *act = t_add_dim(in);
 
     // assert
     return __vassert_tensor_equals(act, out);
@@ -262,7 +262,7 @@ int test_calc_strides()
 
     tensor *t_in = t_alloc(3, shape);
     // act
-    __t_calc_strides(t_in, outStrides);
+    t_calc_strides(t_in, outStrides);
 
     // assert
     return __vassert_int_array_equals(outStrides, expectedStrides, 3);
@@ -276,10 +276,10 @@ int test_get_flat_index()
     int indices[3] = {2, 3, 2};
 
     tensor *t_in = t_alloc(3, shape);
-    __t_calc_strides(t_in, strides);
+    t_calc_strides(t_in, strides);
 
     // act
-    int res = __t_get_flat_index(t_in, strides, indices);
+    int res = t_get_flat_index(t_in, strides, indices);
 
     // assert
     return __vassert_int_equals(res, 57);
@@ -293,10 +293,10 @@ int test_get_indices()
     int expectedIndices[3] = {2, 3, 2};
 
     tensor *t_in = t_alloc(3, shape);
-    __t_calc_strides(t_in, strides);
+    t_calc_strides(t_in, strides);
 
     // act
-    __t_get_indices(t_in, 57, strides, outIndices);
+    t_get_indices(t_in, 57, strides, outIndices);
 
     // assert
     return __vassert_int_array_equals(outIndices, expectedIndices, 3);

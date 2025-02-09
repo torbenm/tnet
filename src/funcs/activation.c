@@ -6,6 +6,8 @@
 
 tensor *av_heaviside(tensor *t, int activationMode)
 {
+    t_assert_not_locked(t);
+
     if (activationMode == FUNCS_NORMAL)
     {
         for (int i = 0; i < t->_v_size; i++)
@@ -22,6 +24,8 @@ tensor *av_heaviside(tensor *t, int activationMode)
 
 tensor *av_logistic(tensor *t, int activationMode)
 {
+    t_assert_not_locked(t);
+
     if (activationMode == FUNCS_NORMAL)
     {
         for (int i = 0; i < t->_v_size; i++)
@@ -41,6 +45,8 @@ tensor *av_logistic(tensor *t, int activationMode)
 
 tensor *av_relu(tensor *t, int activationMode)
 {
+    t_assert_not_locked(t);
+
     if (activationMode == FUNCS_NORMAL)
     {
         for (int i = 0; i < t->_v_size; i++)
@@ -67,6 +73,8 @@ tensor *av_relu(tensor *t, int activationMode)
 
 tensor *av_tanh(tensor *t, int activationMode)
 {
+    t_assert_not_locked(t);
+
     if (activationMode == FUNCS_NORMAL)
     {
         for (int i = 0; i < t->_v_size; i++)
@@ -86,6 +94,8 @@ tensor *av_tanh(tensor *t, int activationMode)
 
 tensor *av_sigmoid(tensor *t, int activationMode)
 {
+    t_assert_not_locked(t);
+
     if (activationMode == FUNCS_NORMAL)
     {
         for (int i = 0; i < t->_v_size; i++)
@@ -107,6 +117,7 @@ tensor *av_sigmoid(tensor *t, int activationMode)
 tensor *av_softmax(tensor *t, int activationMode)
 {
     // Softmax acts across the whole tensor
+    t_assert_not_locked(t);
 
     if (activationMode == FUNCS_NORMAL)
     {
