@@ -93,7 +93,6 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
                 t_free(mon_w_prev);
                 t_free(mon_b_prev);
             }
-
             param_t batchSizeFactor = 1.0 / (param_t)batchSize;
 
             seq->layers[l]->update(
@@ -101,11 +100,11 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
                 localbackwardstates[l],
                 batchSizeFactor * learningRate);
 
-            // updating the global backwardstate
+            // // updating the global backwardstate
             backwardstate_incorporate(&globalbackwardstates[l], localbackwardstates[l], batchSizeFactor);
 
-            // free memory - not needed any longer
-            backwardstate_free(localbackwardstates[l]);
+            // // free memory - not needed any longer
+            // backwardstate_free(localbackwardstates[l]);
             forwardstate_free(&forwardstates[t][l]);
         }
         free(localbackwardstates);

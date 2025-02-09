@@ -59,14 +59,14 @@ void dense_layer_update_weights(void *p, struct backwardstate *bs, param_t updat
 {
     struct denselayer_props *dp = (struct denselayer_props *)p;
     // weights = weights - (weightGradients * updateFactor)
-    tensor *factored_weightGradients = t_mul_const(bs->weightGradients, updateFactor);
+    tensor *factored_weightGradients = t_mul_const(t_copy(bs->weightGradients), updateFactor);
     t_elem_sub(dp->weights, factored_weightGradients);
     t_free(factored_weightGradients);
 
     // bias = bias - (biasGradients * updateFactor)
-    tensor *factored_biasGradients = t_copy(t_mul_const(bs->biasGradients, updateFactor));
+    tensor *factored_biasGradients = t_mul_const(t_copy(bs->biasGradients), updateFactor);
     t_elem_sub(dp->bias, factored_biasGradients);
-    t_free(bs->biasGradients);
+    t_free(factored_biasGradients);
 }
 
 struct backwardstate *dense_layer_backward(void *p, tensor *previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate)
@@ -83,17 +83,15 @@ struct backwardstate *dense_layer_backward(void *p, tensor *previousSmallDelta, 
 
     // TODO: this still needs to be implemented properly and thought through
     tensor *activations_t = t_transpose(prev->activations, 1);
-    // probably this is meant to be an outer multiplication
-    tensor *deltaW = t_mul(smallDelta, prev->activations);
+
+    tensor *deltaW = t_mul(smallDelta, activations_t);
 
     bs->smallDelta = nextSmallDelta;
     bs->weightGradients = deltaW;
-    bs->biasGradients = t_mul_const(smallDelta, 1.0);
-
+    bs->biasGradients = smallDelta;
     t_free(weights_t);
     t_free(activations_t);
     t_free(activationDerivative);
-    t_free(smallDelta);
 
     return bs;
 }

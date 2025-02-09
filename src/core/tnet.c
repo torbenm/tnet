@@ -5,7 +5,7 @@
 void tnet_init()
 {
     srand(time(NULL));
-#if DEBUG
+    // #if DEBUG
     setbuf(stdout, 0);
-#endif
+    // #endif
 }

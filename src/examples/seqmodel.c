@@ -8,7 +8,7 @@
 #define DIFF_THRESHOLD 0.000000001
 #define MAX_ITER 100000
 #define LEARNING_RATE 0.1
-#define MONUMENTUM 0 //.9
+#define MONUMENTUM 0.9
 
 void seq_example_XOR()
 {
