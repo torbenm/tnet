@@ -5,7 +5,7 @@
 #include "train.h"
 #include "core.h"
 
-void train(struct seqmodel *seq, int numExamples, vec inputs[numExamples], vec truths[numExamples], int maxIter, struct optimizer *opt, param_t diffThreshold, param_t lossThreshold)
+void train(struct seqmodel *seq, int numExamples, tensor *inputs[numExamples], tensor *truths[numExamples], int maxIter, struct optimizer *opt, param_t diffThreshold, param_t lossThreshold)
 {
     int converged = 0;
     int iter = 0;

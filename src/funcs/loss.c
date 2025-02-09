@@ -3,34 +3,32 @@
 #include "core.h"
 #include "funcs.h"
 
-param_t loss_mse(int numExamples, int vecSize, vec predictions[numExamples], vec truths[numExamples], int derivative)
+param_t loss_mse(int numExamples, tensor *predictions[numExamples], tensor *truths[numExamples])
 {
     param_t sum = 0;
     for (int i = 0; i < numExamples; i++)
     {
-        param_t v_sum = 0;
-        for (int v = 0; v < vecSize; v++)
-        {
-            param_t err = truths[i][v] - predictions[i][v];
-            v_sum += err * err;
-        }
-        sum += v_sum / (param_t)vecSize;
+        // sum += (truth - pred)^2 / num_nodes
+        tensor *err = t_copy(truths[i]);
+        t_elem_sub(err, predictions[i]);
+        t_elem_mul(err, err);
+        sum += t_collapse_mean_all(err);
+        t_free(err);
     }
     return sum / (param_t)numExamples;
 }
 
-param_t loss_abssum(int numExamples, int vecSize, vec predictions[numExamples], vec truths[numExamples], int derivative)
+param_t loss_abssum(int numExamples, tensor *predictions[numExamples], tensor *truths[numExamples])
 {
     param_t sum = 0;
     for (int i = 0; i < numExamples; i++)
     {
-        param_t v_sum = 0;
-        for (int v = 0; v < vecSize; v++)
-        {
-            param_t err = truths[i][v] - predictions[i][v];
-            v_sum += fabs(err);
-        }
-        sum += v_sum / (param_t)vecSize;
+        // sum += |(truth - pred)| / num_nodes
+        tensor *err = t_copy(truths[i]);
+        t_elem_sub(err, predictions[i]);
+        t_apply(err, fabs);
+        sum += t_collapse_mean_all(err);
+        t_free(err);
     }
     return sum / (param_t)numExamples;
 }

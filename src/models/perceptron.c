@@ -70,7 +70,7 @@ struct perceptron *perceptron_init(int numWeights)
     p->bias = t_alloc_single();
     t_init_rand(p->bias);
 
-    p->activationFn = av_heaviside_tensor;
+    p->activationFn = av_heaviside;
     return p;
 }
 

@@ -5,8 +5,8 @@
 
 struct forwardstate
 {
-    vec activations;
-    vec preActivations;
+    tensor *activations;
+    tensor *preActivations;
     int nOutputs;
 };
 
@@ -17,9 +17,9 @@ struct backwardstate
 {
     int numNodes;
     int numInputs;
-    mat weightGradients;
-    vec biasGradients;
-    vec smallDelta;
+    tensor *weightGradients;
+    tensor *biasGradients;
+    tensor *smallDelta;
 };
 
 struct backwardstate *backwardstate_alloc(int numNodes, int numInputs);
@@ -31,7 +31,7 @@ struct perceptron
 {
     tensor *bias;
     tensor *weights;
-    activationfunc_tensor *activationFn;
+    activationfunc *activationFn;
 };
 
 tensor *perceptron_forward(struct perceptron *p, tensor *vals);
@@ -44,8 +44,8 @@ void perceptron_free(struct perceptron *p);
  */
 #define SEQMODEL_STD_SIZE 4
 
-typedef vec seqmodel_layer_forward(void *layer_struct, vec input, struct forwardstate *state);
-typedef struct backwardstate *seqmodel_layer_backward(void *p, vec previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate);
+typedef tensor *seqmodel_layer_forward(void *layer_struct, tensor *input, struct forwardstate *state);
+typedef struct backwardstate *seqmodel_layer_backward(void *p, tensor *previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate);
 typedef void seqmodel_layer_update_weights(void *p, struct backwardstate *bs, param_t updateFactor);
 struct seqmodel_layer
 {
@@ -65,14 +65,14 @@ struct seqmodel
 struct seqmodel *seqmodel_init();
 void seqmodel_resize(struct seqmodel *seq, int newSize);
 void seqmodel_push(struct seqmodel *seq, struct seqmodel_layer *layer);
-vec seqmodel_predict(struct seqmodel *seq, vec input);
+tensor *seqmodel_predict(struct seqmodel *seq, tensor *input);
 
 struct denselayer_props
 {
     int numNodes;
     int numInputs;
-    mat weights;
-    vec bias;
+    tensor *weights;
+    tensor *bias;
     activationfunc *activationFn;
 };
 

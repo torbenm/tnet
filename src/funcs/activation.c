@@ -4,138 +4,129 @@
 #include "core.h"
 #include "funcs.h"
 
-vec av_heaviside(vec v, int n, int activationMode)
+tensor *av_heaviside(tensor *t, int activationMode)
 {
-    vec o = vec_alloc(n);
     if (activationMode == FUNCS_NORMAL)
     {
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < t->_v_size; i++)
         {
-            o[i] = v[i] >= 0;
+            t->v[i] = t->v[i] >= 0;
         }
     }
     else
     {
         perror("Not existent (or feel free to implement the dirac delta function).");
     }
-    return o;
+    return t;
 }
 
-vec av_logistic(vec v, int n, int activationMode)
+tensor *av_logistic(tensor *t, int activationMode)
 {
-    vec o = vec_alloc(n);
-
     if (activationMode == FUNCS_NORMAL)
     {
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < t->_v_size; i++)
         {
-            o[i] = 1.0 / (1.0 + exp(-v[i]));
+            t->v[i] = 1.0 / (1.0 + exp(-t->v[i]));
         }
     }
     else
     {
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < t->_v_size; i++)
         {
-            o[i] = v[i] * (1 - v[i]);
+            t->v[i] = t->v[i] * (1 - t->v[i]);
         }
     }
-    return o;
+    return t;
 }
 
-vec av_relu(vec v, int n, int activationMode)
+tensor *av_relu(tensor *t, int activationMode)
 {
-    vec o = vec_alloc(n);
-
     if (activationMode == FUNCS_NORMAL)
     {
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < t->_v_size; i++)
         {
-            o[i] = fmax(0.0, v[i]);
+            t->v[i] = fmax(0.0, t->v[i]);
         }
     }
     else
     {
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < t->_v_size; i++)
         {
-            if (v[i] < 0)
+            if (t->v[i] < 0)
             {
-                o[i] = 0;
+                t->v[i] = 0;
             }
             else
             {
-                o[i] = 1;
+                t->v[i] = 1;
             }
         }
     }
-    return o;
+    return t;
 }
 
-vec av_tanh(vec v, int n, int activationMode)
+tensor *av_tanh(tensor *t, int activationMode)
 {
-    vec o = vec_alloc(n);
-
     if (activationMode == FUNCS_NORMAL)
     {
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < t->_v_size; i++)
         {
-            o[i] = tanh(v[i]);
+            t->v[i] = tanh(t->v[i]);
         }
     }
     else
     {
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < t->_v_size; i++)
         {
-            o[i] = 1 - (tanh(v[i]) * tanh(v[i]));
+            t->v[i] = 1 - (tanh(t->v[i]) * tanh(t->v[i]));
         }
     }
-    return o;
+    return t;
 }
 
-vec av_sigmoid(vec v, int n, int activationMode)
+tensor *av_sigmoid(tensor *t, int activationMode)
 {
-    vec o = vec_alloc(n);
-
     if (activationMode == FUNCS_NORMAL)
     {
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < t->_v_size; i++)
         {
-            o[i] = 1.0 / (1.0 + exp(-v[i]));
+            t->v[i] = 1.0 / (1.0 + exp(-t->v[i]));
         }
     }
     else
     {
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < t->_v_size; i++)
         {
-            param_t s = 1.0 / (1.0 + exp(-v[i]));
-            o[i] = s * (1 - s);
+            param_t s = 1.0 / (1.0 + exp(-t->v[i]));
+            t->v[i] = s * (1 - s);
         }
     }
-    return o;
+    return t;
 }
 
-vec av_softmax(vec v, int n, int activationMode)
+tensor *av_softmax(tensor *t, int activationMode)
 {
-    vec o = vec_alloc(n);
+    // Softmax acts across the whole tensor
 
     if (activationMode == FUNCS_NORMAL)
     {
         param_t sumOfAll = 0;
-        for (int i = 0; i < n; i++)
-            sumOfAll += exp(v[i]);
+        for (int i = 0; i < t->_v_size; i++)
+            sumOfAll += exp(t->v[i]);
 
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < t->_v_size; i++)
         {
-            o[i] = exp(v[i]) / sumOfAll;
+            t->v[i] = exp(t->v[i]) / sumOfAll;
         }
     }
     else
     {
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < t->_v_size; i++)
         {
             // sigmoid(v) * (1-sigmoid(v))
-            param_t s = 1.0 / (1.0 + exp(-v[i]));
-            o[i] = s * (1 - s);
+            param_t s = 1.0 / (1.0 + exp(-1 * t->v[i]));
+            t->v[i] = s * (1 - s);
         }
     }
-    return o;
+    return t;
 }

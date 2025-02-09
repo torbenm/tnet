@@ -10,8 +10,15 @@ struct seqmodel_layer *dense_layer_init(int numNodes, int numInputs, activationf
     struct denselayer_props *props = malloc(sizeof(struct denselayer_props));
     props->numNodes = numNodes;
     props->numInputs = numInputs;
-    props->weights = mat_alloc_rand(numNodes, numInputs);
-    props->bias = vec_alloc_rand(numNodes);
+
+    int weightsShape[2] = {numNodes, numInputs};
+    props->weights = t_alloc(2, weightsShape);
+    t_init_rand(props->weights);
+
+    int biasShape[1] = {numNodes};
+    props->bias = t_alloc(1, biasShape);
+    t_init_rand(props->bias);
+
     props->activationFn = activationFn;
 
     // move somewhere else...
@@ -24,13 +31,14 @@ struct seqmodel_layer *dense_layer_init(int numNodes, int numInputs, activationf
     return l;
 }
 
-vec dense_layer_forward(void *p, vec inputs, struct forwardstate *state)
+tensor *dense_layer_forward(void *p, tensor *inputs, struct forwardstate *state)
 {
     struct denselayer_props *dp = (struct denselayer_props *)p;
 
-    vec dotProduct = mat_dot_product(dp->weights, inputs, dp->numNodes, dp->numInputs);
-    vec preActivations = vec_elem_add(dotProduct, dp->bias, dp->numNodes);
-    vec activations = dp->activationFn(preActivations, dp->numNodes, FUNCS_NORMAL);
+    // activations = activationFn(weights * input + bias)
+    tensor *dotProduct = t_mul(t_copy(dp->weights), inputs);
+    tensor *preActivations = t_elem_add(t_copy(dotProduct), dp->bias);
+    tensor *activations = dp->activationFn(t_copy(preActivations), FUNCS_NORMAL);
 
     if (state != NULL)
     {
@@ -40,8 +48,8 @@ vec dense_layer_forward(void *p, vec inputs, struct forwardstate *state)
     }
     else
     {
-        vec_free(dotProduct);
-        vec_free(preActivations);
+        t_free(dotProduct);
+        t_free(preActivations);
     }
 
     return activations;
@@ -50,32 +58,42 @@ vec dense_layer_forward(void *p, vec inputs, struct forwardstate *state)
 void dense_layer_update_weights(void *p, struct backwardstate *bs, param_t updateFactor)
 {
     struct denselayer_props *dp = (struct denselayer_props *)p;
-    mat newWeights = mat_elem_sub_mul(dp->weights, bs->weightGradients, updateFactor, dp->numNodes, dp->numInputs);
-    vec newBias = vec_elem_sub_mul(dp->bias, bs->biasGradients, updateFactor, dp->numNodes);
-    vec_free(dp->bias);
-    mat_free(dp->weights, dp->numNodes);
+    // weights = weights - (weightGradients * updateFactor)
+    tensor *factored_weightGradients = t_mul_const(bs->weightGradients, updateFactor);
+    t_elem_sub(dp->weights, factored_weightGradients);
+    t_free(factored_weightGradients);
 
-    dp->weights = newWeights;
-    dp->bias = newBias;
+    // bias = bias - (biasGradients * updateFactor)
+    tensor *factored_biasGradients = t_copy(t_mul_const(bs->biasGradients, updateFactor));
+    t_elem_sub(dp->bias, factored_biasGradients);
+    t_free(bs->biasGradients);
 }
 
-struct backwardstate *dense_layer_backward(void *p, vec previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate)
+struct backwardstate *dense_layer_backward(void *p, tensor *previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate)
 {
     struct denselayer_props *dp = (struct denselayer_props *)p;
     struct backwardstate *bs = backwardstate_alloc(dp->numNodes, dp->numInputs);
 
-    vec actDeriv = dp->activationFn(curr->preActivations, dp->numNodes, FUNCS_DERIVATIVE);
-    vec smallDelta = vec_elem_mul(previousSmallDelta, actDeriv, dp->numNodes);
+    tensor *activationDerivative = dp->activationFn(t_copy(curr->preActivations), FUNCS_DERIVATIVE);
+    tensor *smallDelta = t_elem_mul(t_copy(previousSmallDelta), activationDerivative);
 
     // calculate nextSmallDelta
-    mat weights_t = mat_transpose(dp->weights, dp->numNodes, dp->numInputs);
-    vec nextSmallDelta = mat_dot_product(weights_t, smallDelta, dp->numInputs, dp->numNodes);
-    mat_free(weights_t, dp->numNodes);
-    bs->smallDelta = nextSmallDelta;
+    tensor *weights_t = t_transpose(dp->weights, 2);
+    tensor *nextSmallDelta = t_mul(weights_t, smallDelta);
 
-    mat deltaW = vec_transposed_vec_mul(smallDelta, prev->activations, 1.0, dp->numNodes, dp->numInputs);
+    // TODO: this still needs to be implemented properly and thought through
+    tensor *activations_t = t_transpose(prev->activations, 1);
+    // probably this is meant to be an outer multiplication
+    tensor *deltaW = t_mul(smallDelta, prev->activations);
+
+    bs->smallDelta = nextSmallDelta;
     bs->weightGradients = deltaW;
-    bs->biasGradients = vec_mul_const(smallDelta, 1.0, dp->numNodes);
+    bs->biasGradients = t_mul_const(smallDelta, 1.0);
+
+    t_free(weights_t);
+    t_free(activations_t);
+    t_free(activationDerivative);
+    t_free(smallDelta);
 
     return bs;
 }

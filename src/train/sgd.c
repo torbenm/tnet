@@ -19,12 +19,11 @@ struct optimizer *opt_sgd_init(param_t learningRate, param_t monumentum, lossfun
     return o;
 }
 
-struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSize, vec inputs[batchSize], vec truths[batchSize], lossfunc *lossFn, struct trainingpass *previouspass)
+struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], lossfunc *lossFn, struct trainingpass *previouspass)
 {
-    setbuf(stdout, 0);
 
     struct forwardstate **forwardstates = malloc(batchSize * sizeof(struct forwardstate *));
-    vec predictions[batchSize];
+    tensor *predictions[batchSize];
 
     param_t learningRate = params[0];
     param_t monumentum = params[1];
@@ -54,7 +53,7 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
     for (int t = 0; t < batchSize; t++)
     {
         // initialize with derivative of mse (TODO: replace with function call)
-        vec nextDelta = vec_elem_sub(predictions[t], truths[t], seq->layers[seq->numLayers - 1]->numOutputs);
+        tensor *nextDelta = t_elem_sub(t_copy(predictions[t]), truths[t]);
         struct backwardstate **localbackwardstates = malloc(seq->numLayers * sizeof(struct backwardstate *));
         // Calculate deltas pass
         for (int l = seq->numLayers - 1; l >= 0; l--)
@@ -71,6 +70,7 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
 
             if (localbackwardstates[l] != NULL)
             {
+                t_free(nextDelta);
                 nextDelta = localbackwardstates[l]->smallDelta;
             }
         }
@@ -80,30 +80,18 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
 
             if (monumentum > 0 && previouspass != NULL && localbackwardstates[l] != NULL && &previouspass->backwardstates[l] != NULL)
             {
-                // Applying monumentum
-                int numNodes = localbackwardstates[l]->numNodes;
-                int numInputs = localbackwardstates[l]->numInputs;
                 // previous update weights * monumentum
-                mat mon_w_prev = mat_mul_const(previouspass->backwardstates[l].weightGradients, monumentum, numNodes, numInputs);
-                vec mon_b_prev = vec_mul_const(previouspass->backwardstates[l].biasGradients, monumentum, numNodes);
+                tensor *mon_w_prev = t_mul_const(t_copy(previouspass->backwardstates[l].weightGradients), monumentum);
+                tensor *mon_b_prev = t_mul_const(t_copy(previouspass->backwardstates[l].biasGradients), monumentum);
 
-                mat mon_w_curr = mat_mul_const(localbackwardstates[l]->weightGradients, 1 - monumentum, numNodes, numInputs);
-                mat mon_b_curr = vec_mul_const(localbackwardstates[l]->biasGradients, 1 - monumentum, numNodes);
+                t_mul_const(localbackwardstates[l]->weightGradients, 1 - monumentum);
+                t_mul_const(localbackwardstates[l]->biasGradients, 1 - monumentum);
 
-                mat new_w = mat_elem_add(mon_w_prev, mon_w_curr, numNodes, numInputs);
-                vec new_b = vec_elem_add(mon_b_prev, mon_b_curr, numNodes);
+                t_elem_add(localbackwardstates[l]->weightGradients, mon_w_prev);
+                t_elem_add(localbackwardstates[l]->biasGradients, mon_b_prev);
 
-                mat_free(localbackwardstates[l]->weightGradients, numNodes);
-                vec_free(localbackwardstates[l]->biasGradients);
-
-                mat_free(mon_w_prev, numNodes);
-                vec_free(mon_b_prev);
-
-                mat_free(mon_w_curr, numNodes);
-                vec_free(mon_b_curr);
-
-                localbackwardstates[l]->weightGradients = new_w;
-                localbackwardstates[l]->biasGradients = new_b;
+                t_free(mon_w_prev);
+                t_free(mon_b_prev);
             }
 
             param_t batchSizeFactor = 1.0 / (param_t)batchSize;
@@ -131,5 +119,5 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
     {
         predictions[t] = seqmodel_predict(seq, inputs[t]);
     }
-    return trainingpass_init(lossFn(batchSize, seq->layers[seq->numLayers - 1]->numOutputs, predictions, truths, FUNCS_NORMAL), globalbackwardstates, seq->numLayers);
+    return trainingpass_init(lossFn(batchSize, predictions, truths), globalbackwardstates, seq->numLayers);
 }

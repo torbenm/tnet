@@ -32,12 +32,12 @@ void seqmodel_push(struct seqmodel *seq, struct seqmodel_layer *layer)
     seq->layers[seq->numLayers++] = layer;
 }
 
-vec seqmodel_predict(struct seqmodel *seq, vec input)
+tensor *seqmodel_predict(struct seqmodel *seq, tensor *input)
 {
-    vec next_inputs = input;
+    tensor *next_inputs = input;
     for (int i = 0; i < seq->numLayers; i++)
     {
-        vec output = seq->layers[i]->forward(seq->layers[i]->layerProps, next_inputs, NULL);
+        tensor *output = seq->layers[i]->forward(seq->layers[i]->layerProps, next_inputs, NULL);
         if (i > 1) // making sure we are not freeing the original inputs
             free(next_inputs);
         next_inputs = output;

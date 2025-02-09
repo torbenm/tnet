@@ -2,6 +2,7 @@
 #include "models.h"
 #include "funcs.h"
 #include "train.h"
+#include <stdio.h>
 
 #define COST_THRESHOLD 0.001
 #define DIFF_THRESHOLD 0.000000001
@@ -20,6 +21,20 @@ void seq_example_XOR()
                             {1.0, 1.0}};
     param_t truths[4][2] = {{0.0, 1.0}, {1.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}};
 
+    tensor *t_values[4] = {
+        t_from_1dim_array(2, values[0]),
+        t_from_1dim_array(2, values[1]),
+        t_from_1dim_array(2, values[2]),
+        t_from_1dim_array(2, values[3]),
+    };
+
+    tensor *t_truths[4] = {
+        t_from_1dim_array(2, truths[0]),
+        t_from_1dim_array(2, truths[1]),
+        t_from_1dim_array(2, truths[2]),
+        t_from_1dim_array(2, truths[3]),
+    };
+
     struct seqmodel *s = seqmodel_init();
     seqmodel_push(s, input_layer_init(2));
     seqmodel_push(s, dense_layer_init(2, 2, av_tanh));
@@ -27,14 +42,14 @@ void seq_example_XOR()
 
     for (int i = 0; i < 4; i++)
     {
-        vec_print(seqmodel_predict(s, vec_from_array(2, values[i])), 2);
+        t_print(seqmodel_predict(s, t_from_1dim_array(2, values[i])));
     }
 
     struct optimizer *o = opt_sgd_init(LEARNING_RATE, MONUMENTUM, loss_mse);
-    train(s, 4, mat_from_array(4, 2, values), mat_from_array(4, 2, truths), MAX_ITER, o, DIFF_THRESHOLD, COST_THRESHOLD);
+    train(s, 4, t_values, t_truths, MAX_ITER, o, DIFF_THRESHOLD, COST_THRESHOLD);
 
     for (int i = 0; i < 4; i++)
     {
-        vec_print(seqmodel_predict(s, vec_from_array(2, values[i])), 2);
+        t_print(seqmodel_predict(s, t_from_1dim_array(2, values[i])));
     }
 }

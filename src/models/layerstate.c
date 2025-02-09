@@ -34,26 +34,13 @@ void backwardstate_incorporate(struct backwardstate *dst, struct backwardstate *
     {
         dst->numInputs = src->numInputs;
         dst->numNodes = src->numNodes;
-        dst->weightGradients = mat_mul_const(src->weightGradients, factor, src->numNodes, src->numInputs);
-        dst->biasGradients = vec_mul_const(src->biasGradients, factor, src->numNodes);
+        dst->weightGradients = t_mul_const(t_copy(src->weightGradients), factor);
+        dst->biasGradients = t_mul_const(t_copy(src->biasGradients), factor);
     }
     else
     {
-        mat newWeightGradients = mat_elem_add_mul(
-            dst->weightGradients,
-            src->weightGradients,
-            factor,
-            src->numNodes,
-            src->numInputs);
-        vec newBiasGradients = vec_elem_add_mul(
-            dst->biasGradients,
-            src->biasGradients,
-            factor,
-            src->numNodes);
-        mat_free(dst->weightGradients, dst->numNodes);
-        vec_free(dst->biasGradients);
-        dst->weightGradients = newWeightGradients;
-        dst->biasGradients = newBiasGradients;
+        t_elem_add(dst->weightGradients, t_mul_const(src->weightGradients, factor));
+        t_elem_add(dst->biasGradients, t_mul_const(src->biasGradients, factor));
     }
 }
 
@@ -61,8 +48,8 @@ void backwardstate_free(struct backwardstate *i)
 {
     if (i == NULL)
         return;
-    vec_free(i->biasGradients);
-    mat_free(i->weightGradients, i->numNodes);
-    vec_free(i->smallDelta);
+    t_free(i->biasGradients);
+    t_free(i->weightGradients);
+    t_free(i->smallDelta);
     free(i);
 }

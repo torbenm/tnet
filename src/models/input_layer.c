@@ -19,7 +19,7 @@ struct seqmodel_layer *input_layer_init(int numInputs)
     return l;
 }
 
-vec input_layer_forward(void *p, vec inputs, struct forwardstate *state)
+tensor *input_layer_forward(void *p, tensor *inputs, struct forwardstate *state)
 {
     struct inputlayer_props *ip = (struct inputlayer_props *)p;
 
@@ -33,7 +33,7 @@ vec input_layer_forward(void *p, vec inputs, struct forwardstate *state)
     return inputs;
 }
 
-struct backwardstate *input_layer_backward(void *p, vec previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate)
+struct backwardstate *input_layer_backward(void *p, tensor *previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate)
 {
     return NULL; // should _not_ be used!
 }
