@@ -1,6 +1,7 @@
 # TNET
 
 This repository contains some playful neural network implementations in C. They are designed to be somewhat modularized and able to generalize, but this is definitely not clean code.
+The mantra of these implementation is "everything from scratch". Apart from some basic stdlib-functions, there are no third-party libraries.
 
 Features currently included:
 - `tensors` as data representation. A number of operations on tensors are implemented, such as tensor dot multiplication, element wise operations, etc.; not all of them in a fully generalized way, though. Most of the implementations should however remark where they do not generalize.
