@@ -119,13 +119,13 @@ tensor *t_alloc(int ndim, const int shape[ndim])
     return t;
 }
 
-void t_dodge(tensor *t)
+void t_mark(tensor *t)
 {
     if (t == NULL)
         return;
-    mm_dodge(t);
-    mm_dodge(t->v);
-    mm_dodge(t->shape);
+    mm_mark(t);
+    mm_mark(t->v);
+    mm_mark(t->shape);
 }
 
 tensor *t_alloc_single()

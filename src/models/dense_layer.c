@@ -28,17 +28,17 @@ struct seqmodel_layer *dense_layer_init(int numNodes, int numInputs, activationf
     l->forward = dense_layer_forward;
     l->backward = dense_layer_backward;
     l->update = dense_layer_update_weights;
-    l->dodge = dense_layer_dodge;
+    l->mark = dense_layer_mark;
     return l;
 }
 
-void dense_layer_dodge(struct seqmodel_layer *self)
+void dense_layer_mark(struct seqmodel_layer *self)
 {
     struct denselayer_props *dp = (struct denselayer_props *)self->layerProps;
-    mm_dodge(self);
-    mm_dodge(self->layerProps);
-    t_dodge(dp->bias);
-    t_dodge(dp->weights);
+    mm_mark(self);
+    mm_mark(self->layerProps);
+    t_mark(dp->bias);
+    t_mark(dp->weights);
 }
 
 tensor *dense_layer_forward(void *p, tensor *inputs, struct forwardstate *state)

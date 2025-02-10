@@ -7,8 +7,8 @@
 /**
  * "Basic" Garbage collector & memory management.
  * All allocated memory is stored in a list of pointers.
- * You may run mm_wipe(); every now and then - this will go through the list of pointers
- * and remove all memory allocations that have not been dodged before.
+ * You may run mm_sweep(); every now and then - this will go through the list of pointers
+ * and remove all memory allocations that have not been markd before.
  */
 
 /**
@@ -17,9 +17,9 @@
 #define MAX_MEMORY_POINTERS 4096
 
 void *MEMORY_POINTERS[MAX_MEMORY_POINTERS];
-void *DODGED_MM_PTRS[MAX_MEMORY_POINTERS];
+void *MARKED_MM_PTRS[MAX_MEMORY_POINTERS];
 size_t next_memory_ptr = 0;
-size_t next_dodged_ptr = 0;
+size_t next_markd_ptr = 0;
 
 void __mm_compact()
 {
@@ -75,33 +75,33 @@ void mm_free(void *ptr)
         }
     }
 }
-void mm_dodge(void *ptr)
+void mm_mark(void *ptr)
 {
-    if (next_dodged_ptr > MAX_MEMORY_POINTERS)
+    if (next_markd_ptr > MAX_MEMORY_POINTERS)
         error("You tried to mark too many pointers :(. Either try wiping more often or make the memory ptrs list more flexible...\n");
-    DODGED_MM_PTRS[next_dodged_ptr++] = ptr;
+    MARKED_MM_PTRS[next_markd_ptr++] = ptr;
 }
-void mm_undodge(void *ptr)
+void mm_unmark(void *ptr)
 {
-    for (int i = 0; i < next_dodged_ptr; i++)
+    for (int i = 0; i < next_markd_ptr; i++)
     {
-        if (DODGED_MM_PTRS[i] == ptr)
+        if (MARKED_MM_PTRS[i] == ptr)
         {
-            DODGED_MM_PTRS[i] = NULL;
+            MARKED_MM_PTRS[i] = NULL;
         }
     }
 }
-void mm_undodge_all()
+void mm_unmark_all()
 {
-    // just setting next_dodged_ptr to 0
-    next_dodged_ptr = 0;
+    // just setting next_markd_ptr to 0
+    next_markd_ptr = 0;
 }
 
-int __mm_wipe_ptr(int memoryPtrIdx)
+int __mm_sweep_ptr(int memoryPtrIdx)
 {
-    for (int m = 0; m < next_dodged_ptr; m++)
+    for (int m = 0; m < next_markd_ptr; m++)
     {
-        if (DODGED_MM_PTRS[m] == MEMORY_POINTERS[memoryPtrIdx])
+        if (MARKED_MM_PTRS[m] == MEMORY_POINTERS[memoryPtrIdx])
             return 0;
     }
     free(MEMORY_POINTERS[memoryPtrIdx]);
@@ -109,12 +109,12 @@ int __mm_wipe_ptr(int memoryPtrIdx)
     return 1;
 }
 
-void mm_wipe()
+void mm_sweep()
 {
     for (int i = 0; i < next_memory_ptr; i++)
     {
         if (MEMORY_POINTERS[i] != NULL)
-            __mm_wipe_ptr(i);
+            __mm_sweep_ptr(i);
     }
     __mm_compact();
 }

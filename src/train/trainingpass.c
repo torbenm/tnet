@@ -15,12 +15,12 @@ struct trainingpass *trainingpass_init(
     return tp;
 }
 
-void trainingpass_dodge(struct trainingpass *tp)
+void trainingpass_mark(struct trainingpass *tp)
 {
-    mm_dodge(tp);
+    mm_mark(tp);
     for (int l = 0; l < tp->numLayers; l++)
     {
-        backwardstate_dodge(&tp->backwardstates[l]);
+        backwardstate_mark(&tp->backwardstates[l]);
     }
 }
 

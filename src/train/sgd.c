@@ -19,10 +19,10 @@ struct optimizer *opt_sgd_init(param_t learningRate, param_t monumentum, lossfun
     return o;
 }
 
-void optimizer_dodge(struct optimizer *o)
+void optimizer_mark(struct optimizer *o)
 {
-    mm_dodge(o);
-    mm_dodge(o->params);
+    mm_mark(o);
+    mm_mark(o->params);
 }
 
 struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], lossfunc *lossFn, struct trainingpass *previouspass)

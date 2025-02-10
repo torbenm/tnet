@@ -12,13 +12,13 @@ struct seqmodel *seqmodel_init()
     return seq;
 }
 
-void seqmodel_dodge(struct seqmodel *seq)
+void seqmodel_mark(struct seqmodel *seq)
 {
-    mm_dodge(seq);
-    mm_dodge(seq->layers);
+    mm_mark(seq);
+    mm_mark(seq->layers);
     for (int l = 0; l < seq->numLayers; l++)
     {
-        seq->layers[l]->dodge(seq->layers[l]);
+        seq->layers[l]->mark(seq->layers[l]);
     }
 }
 

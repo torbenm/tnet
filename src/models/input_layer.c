@@ -16,14 +16,14 @@ struct seqmodel_layer *input_layer_init(int numInputs)
     l->forward = input_layer_forward;
     l->backward = input_layer_backward;
     l->update = input_layer_update_weights;
-    l->dodge = input_layer_dodge;
+    l->mark = input_layer_mark;
     return l;
 }
 
-void input_layer_dodge(struct seqmodel_layer *self)
+void input_layer_mark(struct seqmodel_layer *self)
 {
-    mm_dodge(self->layerProps);
-    mm_dodge(self);
+    mm_mark(self->layerProps);
+    mm_mark(self);
 }
 
 tensor *input_layer_forward(void *p, tensor *inputs, struct forwardstate *state)

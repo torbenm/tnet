@@ -25,7 +25,7 @@ typedef struct tensor
 
 // alloc & init & locking
 tensor *t_alloc(int ndim, const int shape[ndim]);
-void t_dodge(tensor *t);
+void t_mark(tensor *t);
 tensor *t_alloc_single();
 tensor *t_alloc_single_from(param_t value);
 tensor *t_alloc_rand(int ndim, const int shape[ndim]);
@@ -83,8 +83,8 @@ void tensor_test();
 // Memory Mgmt
 void *mm_alloc(size_t size);
 void *mm_calloc(size_t __count, size_t __size);
-void mm_dodge(void *ptr);
-void mm_undodge(void *ptr);
-void mm_undodge_all();
-void mm_wipe();
+void mm_mark(void *ptr);
+void mm_unmark(void *ptr);
+void mm_unmark_all();
+void mm_sweep();
 void mm_free(void *ptr);

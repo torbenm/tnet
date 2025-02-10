@@ -18,11 +18,11 @@ void forwardstate_free(struct forwardstate *i)
     mm_free(i);
 }
 
-void forwardstate_dodge(struct forwardstate *f)
+void forwardstate_mark(struct forwardstate *f)
 {
-    mm_dodge(f);
-    t_dodge(f->activations);
-    t_dodge(f->preActivations);
+    mm_mark(f);
+    t_mark(f->activations);
+    t_mark(f->preActivations);
 }
 
 void forwardstate_lock(struct forwardstate *f)
@@ -49,14 +49,14 @@ struct backwardstate *backwardstate_copy(struct backwardstate *src)
     return dst;
 }
 
-void backwardstate_dodge(struct backwardstate *b)
+void backwardstate_mark(struct backwardstate *b)
 {
     if (b == NULL)
         return;
-    mm_dodge(b);
-    t_dodge(b->biasGradients);
-    t_dodge(b->weightGradients);
-    t_dodge(b->smallDelta);
+    mm_mark(b);
+    t_mark(b->biasGradients);
+    t_mark(b->weightGradients);
+    t_mark(b->smallDelta);
 }
 
 void backwardstate_incorporate(struct backwardstate *dst, struct backwardstate *src, param_t factor)

@@ -12,7 +12,7 @@ struct forwardstate
 
 struct forwardstate *forwardstate_alloc(int size);
 void forwardstate_free(struct forwardstate *);
-void forwardstate_dodge(struct forwardstate *);
+void forwardstate_mark(struct forwardstate *);
 void forwardstate_lock(struct forwardstate *f);
 
 struct backwardstate
@@ -28,7 +28,7 @@ struct backwardstate *backwardstate_alloc(int numNodes, int numInputs);
 struct backwardstate *backwardstate_copy(struct backwardstate *src);
 void backwardstate_free(struct backwardstate *);
 void backwardstate_lock(struct backwardstate *);
-void backwardstate_dodge(struct backwardstate *);
+void backwardstate_mark(struct backwardstate *);
 void backwardstate_incorporate(struct backwardstate *dst, struct backwardstate *src, param_t factor);
 
 // Perceptron - tensor
@@ -59,7 +59,7 @@ struct seqmodel_layer
     seqmodel_layer_forward *forward;
     seqmodel_layer_backward *backward;
     seqmodel_layer_update_weights *update;
-    void (*dodge)(struct seqmodel_layer *);
+    void (*mark)(struct seqmodel_layer *);
 };
 
 struct seqmodel
@@ -71,7 +71,7 @@ struct seqmodel
 struct seqmodel *seqmodel_init();
 void seqmodel_resize(struct seqmodel *seq, int newSize);
 void seqmodel_push(struct seqmodel *seq, struct seqmodel_layer *layer);
-void seqmodel_dodge(struct seqmodel *seq);
+void seqmodel_mark(struct seqmodel *seq);
 tensor *seqmodel_predict(struct seqmodel *seq, tensor *input);
 
 struct denselayer_props
@@ -87,7 +87,7 @@ struct seqmodel_layer *dense_layer_init(int numNodes, int numInputs, activationf
 seqmodel_layer_forward dense_layer_forward;
 seqmodel_layer_backward dense_layer_backward;
 seqmodel_layer_update_weights dense_layer_update_weights;
-void dense_layer_dodge(struct seqmodel_layer *self);
+void dense_layer_mark(struct seqmodel_layer *self);
 
 struct inputlayer_props
 {
@@ -98,4 +98,4 @@ struct seqmodel_layer *input_layer_init(int numInputs);
 seqmodel_layer_forward input_layer_forward;
 seqmodel_layer_backward input_layer_backward;
 seqmodel_layer_update_weights input_layer_update_weights;
-void input_layer_dodge(struct seqmodel_layer *self);
+void input_layer_mark(struct seqmodel_layer *self);
