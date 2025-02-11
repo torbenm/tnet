@@ -25,7 +25,7 @@ void optimizer_mark(struct optimizer *o)
     mm_mark(o->params);
 }
 
-struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], lossfunc *lossFn, struct trainingpass *previouspass)
+struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], lossfunc *lossFn, struct trainingpass *previouspass, int trainingPassNum)
 {
 
     struct forwardstate **forwardstates = mm_alloc(batchSize * sizeof(struct forwardstate *));
@@ -55,7 +55,7 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
      * Backwardpass
      */
 
-    struct backwardstate *globalbackwardstates = mm_alloc(seq->numLayers * sizeof(struct backwardstate));
+    struct tensor **stored_tensors = mm_calloc((seq->numLayers * 2), sizeof(struct tensor *));
 
     for (int t = 0; t < batchSize; t++)
     {
@@ -63,6 +63,7 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
         tensor *nextDelta = t_elem_sub(t_copy(predictions[t]), truths[t]);
 
         struct backwardstate **localbackwardstates = mm_alloc(seq->numLayers * sizeof(struct backwardstate *));
+
         // Calculate deltas pass
         for (int l = seq->numLayers - 1; l >= 0; l--)
         {
@@ -84,41 +85,57 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
                 nextDelta = localbackwardstates[l]->smallDelta;
         }
         t_free(nextDelta);
+
         // Apply deltas pass
         for (int l = 0; l < seq->numLayers; l++)
         {
 
-            struct backwardstate *weightedBs = backwardstate_copy(localbackwardstates[l]);
-
-            if (monumentum > 0 && previouspass != NULL && weightedBs != NULL && &previouspass->backwardstates[l] != NULL)
+            if (localbackwardstates[l] != NULL)
             {
-                // previous update weights * monumentum
-                tensor *mon_w_prev = t_mul_const(t_copy(previouspass->backwardstates[l].weightGradients), monumentum);
-                tensor *mon_b_prev = t_mul_const(t_copy(previouspass->backwardstates[l].biasGradients), monumentum);
+                tensor *updateWeights = t_copy(localbackwardstates[l]->weightGradients);
+                tensor *updateBias = t_copy(localbackwardstates[l]->biasGradients);
 
-                t_mul_const(weightedBs->weightGradients, 1 - monumentum);
-                t_mul_const(weightedBs->biasGradients, 1 - monumentum);
+                param_t batchSizeFactor = 1.0 / (param_t)batchSize;
 
-                t_elem_add(weightedBs->weightGradients, mon_w_prev);
-                t_elem_add(weightedBs->biasGradients, mon_b_prev);
+                int trainingpassWeightsIdx = l * 2;
+                int trainingpassBiasIdx = l * 2 + 1;
 
-                t_free(mon_w_prev);
-                t_free(mon_b_prev);
+                if (previouspass != NULL && previouspass->stored_tensors[trainingpassWeightsIdx] != NULL && previouspass->stored_tensors[trainingpassBiasIdx] != NULL)
+                {
+                    // monumentum
+                    tensor *prev_w_factored = t_mul_const(t_copy(previouspass->stored_tensors[trainingpassWeightsIdx]), monumentum);
+                    tensor *prev_b_factored = t_mul_const(t_copy(previouspass->stored_tensors[trainingpassBiasIdx]), monumentum);
+                    t_elem_add(t_mul_const(updateWeights, 1 - monumentum), prev_w_factored);
+                    t_elem_add(t_mul_const(updateBias, 1 - monumentum), prev_b_factored);
+                    t_free(prev_w_factored);
+                    t_free(prev_b_factored);
+                }
+
+                t_mul_const(updateWeights, batchSizeFactor);
+                t_mul_const(updateBias, batchSizeFactor);
+
+                // update stored_tensors
+                if (stored_tensors[trainingpassWeightsIdx] == NULL)
+                    stored_tensors[trainingpassWeightsIdx] = t_copy(updateWeights);
+                else
+                    t_elem_add(stored_tensors[trainingpassWeightsIdx], updateWeights);
+
+                if (stored_tensors[trainingpassBiasIdx] == NULL)
+                    stored_tensors[trainingpassBiasIdx] = t_copy(updateBias);
+                else
+                    t_elem_add(stored_tensors[trainingpassBiasIdx], updateBias);
+
+                t_mul_const(updateWeights, learningRate);
+                t_mul_const(updateBias, learningRate);
+
+                seq->layers[l]->update(
+                    seq->layers[l]->layerProps,
+                    updateWeights,
+                    updateBias);
+
+                t_free(updateBias);
+                t_free(updateWeights);
             }
-            backwardstate_lock(weightedBs); // avoid its properties being altered.
-
-            param_t batchSizeFactor = 1.0 / (param_t)batchSize;
-
-            seq->layers[l]->update(
-                seq->layers[l]->layerProps,
-                weightedBs,
-                batchSizeFactor * learningRate);
-
-            // // updating the global backwardstate
-            backwardstate_incorporate(&globalbackwardstates[l], localbackwardstates[l], batchSizeFactor);
-
-            // // free memory - not needed any longer
-            backwardstate_free(weightedBs);
         }
         for (int l = 0; l < seq->numLayers; l++)
         {
@@ -137,7 +154,7 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
         predictions[t] = seqmodel_predict(seq, inputs[t]);
     }
 
-    struct trainingpass *tp = trainingpass_init(lossFn(batchSize, predictions, truths), globalbackwardstates, seq->numLayers);
+    struct trainingpass *tp = trainingpass_init(lossFn(batchSize, predictions, truths), stored_tensors, seq->numLayers * 2);
 
     // Free predictions
     for (int t = 0; t < batchSize; t++)

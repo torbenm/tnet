@@ -47,7 +47,7 @@ void seq_example_XOR()
         t_free(t);
     }
 
-    struct optimizer *o = opt_sgd_init(LEARNING_RATE, MONUMENTUM, loss_mse);
+    struct optimizer *o = opt_adam_init(0.01, 0.9, 0.999, loss_mse);
     train(s, 4, t_values, t_truths, MAX_ITER, o, DIFF_THRESHOLD, COST_THRESHOLD);
 
     for (int i = 0; i < 4; i++)

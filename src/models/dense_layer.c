@@ -65,18 +65,14 @@ tensor *dense_layer_forward(void *p, tensor *inputs, struct forwardstate *state)
     return activations;
 }
 
-void dense_layer_update_weights(void *p, struct backwardstate *bs, param_t updateFactor)
+void dense_layer_update_weights(void *p, tensor *updateWeights, tensor *updateBias)
 {
     struct denselayer_props *dp = (struct denselayer_props *)p;
     // weights = weights - (weightGradients * updateFactor)
-    tensor *factored_weightGradients = t_mul_const(t_copy(bs->weightGradients), updateFactor);
-    t_elem_sub(dp->weights, factored_weightGradients);
-    t_free(factored_weightGradients);
+    t_elem_sub(dp->weights, updateWeights);
 
     // bias = bias - (biasGradients * updateFactor)
-    tensor *factored_biasGradients = t_mul_const(t_copy(bs->biasGradients), updateFactor);
-    t_elem_sub(dp->bias, factored_biasGradients);
-    t_free(factored_biasGradients);
+    t_elem_sub(dp->bias, updateBias);
 }
 
 struct backwardstate *dense_layer_backward(void *p, tensor *previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate)

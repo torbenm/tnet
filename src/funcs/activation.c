@@ -30,7 +30,7 @@ tensor *av_logistic(tensor *t, int activationMode)
     {
         for (int i = 0; i < t->_v_size; i++)
         {
-            t->v[i] = 1.0 / (1.0 + exp(-t->v[i]));
+            t->v[i] = 1.0 / (1.0 + exp(-t->v[i]) + EPSILON);
         }
     }
     else
@@ -100,14 +100,14 @@ tensor *av_sigmoid(tensor *t, int activationMode)
     {
         for (int i = 0; i < t->_v_size; i++)
         {
-            t->v[i] = 1.0 / (1.0 + exp(-t->v[i]));
+            t->v[i] = 1.0 / (1.0 + exp(-t->v[i]) + EPSILON);
         }
     }
     else
     {
         for (int i = 0; i < t->_v_size; i++)
         {
-            param_t s = 1.0 / (1.0 + exp(-t->v[i]));
+            param_t s = 1.0 / (1.0 + exp(-t->v[i]) + EPSILON);
             t->v[i] = s * (1 - s);
         }
     }
@@ -127,7 +127,7 @@ tensor *av_softmax(tensor *t, int activationMode)
 
         for (int i = 0; i < t->_v_size; i++)
         {
-            t->v[i] = exp(t->v[i]) / sumOfAll;
+            t->v[i] = exp(t->v[i]) / (sumOfAll + EPSILON);
         }
     }
     else
@@ -135,7 +135,7 @@ tensor *av_softmax(tensor *t, int activationMode)
         for (int i = 0; i < t->_v_size; i++)
         {
             // sigmoid(v) * (1-sigmoid(v))
-            param_t s = 1.0 / (1.0 + exp(-1 * t->v[i]));
+            param_t s = 1.0 / (1.0 + exp(-1 * t->v[i]) + EPSILON);
             t->v[i] = s * (1 - s);
         }
     }

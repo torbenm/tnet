@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "core.h"
 
@@ -272,6 +273,7 @@ param_t _add(param_t a, param_t b) { return a + b; }
 param_t _sub(param_t a, param_t b) { return a - b; }
 param_t _mul(param_t a, param_t b) { return a * b; }
 param_t _div(param_t a, param_t b) { return a / b; }
+param_t _pow(param_t a, param_t b) { return pow(a, b); }
 
 tensor *_t_const_apply(tensor *dst, param_t cnst, param_t (*fn)(param_t, param_t))
 {
@@ -337,6 +339,11 @@ tensor *t_mul_const(tensor *dst, param_t cnst)
 tensor *t_div_const(tensor *dst, param_t cnst)
 {
     return _t_const_apply(dst, cnst, _div);
+}
+
+tensor *t_pow_const(tensor *dst, param_t cnst)
+{
+    return _t_const_apply(dst, cnst, _pow);
 }
 
 tensor *t_apply(tensor *dst, param_t (*applyFn)(param_t))

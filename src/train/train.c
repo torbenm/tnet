@@ -38,7 +38,7 @@ void train(struct seqmodel *seq, int numExamples, tensor *inputs[numExamples], t
         __train_mark_and_sweep(seq, numExamples, inputs, truths, opt, prev_pass);
         prev_loss = current_loss;
 
-        struct trainingpass *next_pass = opt->run_opt(seq, opt->params, numExamples, inputs, truths, opt->lossFn, prev_pass);
+        struct trainingpass *next_pass = opt->run_opt(seq, opt->params, numExamples, inputs, truths, opt->lossFn, prev_pass, iter);
         current_loss = next_pass->loss;
         printf("Iteration %i: loss=%.4f\n", iter, current_loss);
         if (prev_pass != NULL)
@@ -48,7 +48,6 @@ void train(struct seqmodel *seq, int numExamples, tensor *inputs[numExamples], t
 
         // // Check whether the network is converging...
         converged = fabs(prev_loss - current_loss) < diffThreshold || current_loss < lossThreshold;
-
         iter++;
     }
     trainingpass_free(prev_pass);

@@ -51,7 +51,7 @@ void perceptron_free(struct perceptron *p);
 
 typedef tensor *seqmodel_layer_forward(void *layer_struct, tensor *input, struct forwardstate *state);
 typedef struct backwardstate *seqmodel_layer_backward(void *p, tensor *previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate);
-typedef void seqmodel_layer_update_weights(void *p, struct backwardstate *bs, param_t updateFactor);
+typedef void seqmodel_layer_update_weights(void *p, tensor *updateWeights, tensor *updateBias);
 struct seqmodel_layer
 {
     void *layerProps;

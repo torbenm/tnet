@@ -7,6 +7,8 @@ typedef double param_t;
 typedef param_t **mat;
 typedef param_t *vec;
 
+#define EPSILON 10e-8
+
 /**
  * Tensor definitions.
  * Tensors are multidimensional matrices.
@@ -16,7 +18,7 @@ typedef param_t *vec;
 // Types
 typedef struct tensor
 {
-    char locked; // whether or not the tensor might be updated in-place
+    int locked; // whether or not the tensor might be updated in-place
     int ndim;
     int *shape;
     int _v_size; // size of the v array
@@ -57,6 +59,7 @@ tensor *t_add_const(tensor *dst, param_t cnst);
 tensor *t_sub_const(tensor *dst, param_t cnst);
 tensor *t_mul_const(tensor *dst, param_t cnst);
 tensor *t_div_const(tensor *dst, param_t cnst);
+tensor *t_pow_const(tensor *dst, param_t cnst);
 tensor *t_apply(tensor *dst, param_t (*applyFn)(param_t));
 
 tensor *t_transpose(tensor *t, int transposeLastNDimensions);

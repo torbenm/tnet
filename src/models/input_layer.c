@@ -45,7 +45,7 @@ struct backwardstate *input_layer_backward(void *p, tensor *previousSmallDelta, 
     return NULL; // should _not_ be used!
 }
 
-void input_layer_update_weights(void *p, struct backwardstate *bs, param_t updateFactor)
+void input_layer_update_weights(void *p, tensor *updateWeights, tensor *updateBias)
 {
     // NOOP
 }
