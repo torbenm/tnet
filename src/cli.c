@@ -40,7 +40,7 @@ int clifunc_iterexec(int numFuncs, struct clifunc *clifuncs[numFuncs], char *fun
 
 int main(int argc, char **argv)
 {
-    const int numFuncs = 7;
+    const int numFuncs = 8;
     struct clifunc *funcs[numFuncs] = {
         clifunc_init("perceptron-or", perceptron_example_OR),
         clifunc_init("perceptron-and", perceptron_example_AND),
