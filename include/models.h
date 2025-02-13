@@ -25,11 +25,9 @@ struct backwardstate
 };
 
 struct backwardstate *backwardstate_alloc(int numNodes, int numInputs);
-struct backwardstate *backwardstate_copy(struct backwardstate *src);
 void backwardstate_free(struct backwardstate *);
 void backwardstate_lock(struct backwardstate *);
 void backwardstate_mark(struct backwardstate *);
-void backwardstate_incorporate(struct backwardstate *dst, struct backwardstate *src, param_t factor);
 
 // Perceptron - tensor
 struct perceptron
@@ -50,7 +48,7 @@ void perceptron_free(struct perceptron *p);
 #define SEQMODEL_STD_SIZE 4
 
 typedef tensor *seqmodel_layer_forward(void *layer_struct, tensor *input, struct forwardstate *state);
-typedef struct backwardstate *seqmodel_layer_backward(void *p, tensor *previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate);
+typedef struct backwardstate *seqmodel_layer_backward(void *p, tensor *previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev);
 typedef void seqmodel_layer_update_weights(void *p, tensor *updateWeights, tensor *updateBias);
 struct seqmodel_layer
 {
@@ -73,6 +71,7 @@ void seqmodel_resize(struct seqmodel *seq, int newSize);
 void seqmodel_push(struct seqmodel *seq, struct seqmodel_layer *layer);
 void seqmodel_mark(struct seqmodel *seq);
 tensor *seqmodel_predict(struct seqmodel *seq, tensor *input);
+param_t seqmodel_calculate_loss(struct seqmodel *seq, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], lossfunc *lossFn);
 
 struct denselayer_props
 {

@@ -75,7 +75,7 @@ void dense_layer_update_weights(void *p, tensor *updateWeights, tensor *updateBi
     t_elem_sub(dp->bias, updateBias);
 }
 
-struct backwardstate *dense_layer_backward(void *p, tensor *previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate)
+struct backwardstate *dense_layer_backward(void *p, tensor *previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev)
 {
     struct denselayer_props *dp = (struct denselayer_props *)p;
     struct backwardstate *bs = backwardstate_alloc(dp->numNodes, dp->numInputs);

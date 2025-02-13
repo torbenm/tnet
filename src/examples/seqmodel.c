@@ -10,16 +10,8 @@
 #define LEARNING_RATE 0.1
 #define MONUMENTUM 0.9
 
-void seq_example_XOR()
+void seq_example_EXEC(param_t values[4][2], param_t truths[4][2])
 {
-    const int numLayers = 1;
-    int numParamsPerLayer[1] = {2};
-
-    param_t values[4][2] = {{0.0, 0.0},
-                            {0.0, 1.0},
-                            {1.0, 0.0},
-                            {1.0, 1.0}};
-    param_t truths[4][2] = {{0.0, 1.0}, {1.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}};
 
     tensor *t_values[4] = {
         t_lock(t_from_1dim_array(2, values[0])),
@@ -48,10 +40,41 @@ void seq_example_XOR()
     }
 
     struct optimizer *o = opt_adam_init(0.01, 0.9, 0.999, loss_mse);
+    // struct optimizer *o = opt_sgd_init(0.1, 0.9, loss_mse);
     train(s, 4, t_values, t_truths, MAX_ITER, o, DIFF_THRESHOLD, COST_THRESHOLD);
 
     for (int i = 0; i < 4; i++)
     {
         t_print(seqmodel_predict(s, t_values[i]));
     }
+}
+
+void seq_example_XOR()
+{
+    param_t values[4][2] = {{0.0, 0.0},
+                            {0.0, 1.0},
+                            {1.0, 0.0},
+                            {1.0, 1.0}};
+    param_t truths[4][2] = {{0.0, 1.0}, {1.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}};
+    seq_example_EXEC(values, truths);
+}
+
+void seq_example_OR()
+{
+    param_t values[4][2] = {{0.0, 0.0},
+                            {0.0, 1.0},
+                            {1.0, 0.0},
+                            {1.0, 1.0}};
+    param_t truths[4][2] = {{0.0, 1.0}, {1.0, 0.0}, {1.0, 0.0}, {1.0, 0.0}};
+    seq_example_EXEC(values, truths);
+}
+
+void seq_example_AND()
+{
+    param_t values[4][2] = {{0.0, 0.0},
+                            {0.0, 1.0},
+                            {1.0, 0.0},
+                            {1.0, 1.0}};
+    param_t truths[4][2] = {{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}, {1.0, 0.0}};
+    seq_example_EXEC(values, truths);
 }

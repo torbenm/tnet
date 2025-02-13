@@ -5,5 +5,6 @@
 void tnet_init()
 {
     srand(time(NULL));
+    rand();
     setbuf(stdout, 0);
 }

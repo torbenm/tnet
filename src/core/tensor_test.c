@@ -4,7 +4,7 @@
 #include "core.h"
 
 #define TEST_FAILURE 0
-#define TEST_SUCCESS 12
+#define TEST_SUCCESS 1
 
 // assertions
 int __assert_tensor_equals(tensor *actual, tensor *expected)

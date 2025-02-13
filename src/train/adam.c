@@ -22,65 +22,20 @@ struct optimizer *opt_adam_init(param_t alpha, param_t beta1, param_t beta2, los
 
 struct trainingpass *opt_adam(struct seqmodel *seq, param_t *params, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], lossfunc *lossFn, struct trainingpass *previouspass, int trainingPassNum)
 {
-
-    struct forwardstate **forwardstates = mm_alloc(batchSize * sizeof(struct forwardstate *));
     tensor *predictions[batchSize];
 
     param_t alpha = params[0];
     param_t beta1 = params[1];
     param_t beta2 = params[2];
-
-    /**
-     * Forwardpass
-     */
-    for (int t = 0; t < batchSize; t++)
-    {
-        forwardstates[t] = mm_alloc((seq->numLayers) * sizeof(struct forwardstate));
-        for (int l = 0; l < seq->numLayers; l++)
-        {
-            if (l == 0)
-                seq->layers[l]->forward(seq->layers[l]->layerProps, inputs[t], &forwardstates[t][l]);
-            else
-                seq->layers[l]->forward(seq->layers[l]->layerProps, forwardstates[t][l - 1].activations, &forwardstates[t][l]);
-            forwardstate_lock(&forwardstates[t][l]);
-        }
-        predictions[t] = forwardstates[t][seq->numLayers - 1].activations;
-    }
-
-    /**
-     * Backwardpass
-     */
+    param_t batchSizeFactor = 1.0 / (param_t)batchSize;
 
     struct tensor **stored_tensors = mm_calloc((seq->numLayers * 4), sizeof(struct tensor *));
 
     for (int t = 0; t < batchSize; t++)
     {
-        // initialize with derivative of mse (TODO: replace with function call)
-        tensor *nextDelta = t_elem_sub(t_copy(predictions[t]), truths[t]);
 
-        struct backwardstate **localbackwardstates = mm_alloc(seq->numLayers * sizeof(struct backwardstate *));
-
-        // Calculate deltas pass
-        for (int l = seq->numLayers - 1; l >= 0; l--)
-        {
-            struct forwardstate *prev = NULL;
-            if (l > 0)
-                prev = &forwardstates[t][l - 1];
-            localbackwardstates[l] = seq->layers[l]->backward(
-                seq->layers[l]->layerProps,
-                nextDelta,
-                &forwardstates[t][l],
-                prev,
-                alpha);
-
-            t_free(nextDelta);
-            if (l < seq->numLayers - 1)
-                localbackwardstates[l + 1]->smallDelta = NULL;
-
-            if (localbackwardstates[l] != NULL)
-                nextDelta = localbackwardstates[l]->smallDelta;
-        }
-        t_free(nextDelta);
+        struct forwardstate *forwardstates = opt_forwardpropagate(seq, inputs[t], &predictions[t]);
+        struct backwardstate **localbackwardstates = opt_backwardpropagate(seq, predictions[t], truths[t], forwardstates);
 
         // Apply deltas pass
         for (int l = 0; l < seq->numLayers; l++)
@@ -92,8 +47,6 @@ struct trainingpass *opt_adam(struct seqmodel *seq, param_t *params, int batchSi
                 tensor *momentumBias = t_copy(localbackwardstates[l]->biasGradients);
                 tensor *velocityWeights = t_copy(localbackwardstates[l]->weightGradients);
                 tensor *velocityBias = t_copy(localbackwardstates[l]->biasGradients);
-
-                param_t batchSizeFactor = 1.0 / (param_t)batchSize;
 
                 int momentumWeightsIdx = l * 4;
                 int momentumBiasIdx = momentumWeightsIdx + 1;
@@ -126,15 +79,8 @@ struct trainingpass *opt_adam(struct seqmodel *seq, param_t *params, int batchSi
                 t_mul_const(momentumBias, batchSizeFactor);
 
                 // update stored_tensors
-                if (stored_tensors[momentumWeightsIdx] == NULL)
-                    stored_tensors[momentumWeightsIdx] = t_copy(momentumWeights);
-                else
-                    t_elem_add(stored_tensors[momentumWeightsIdx], momentumWeights);
-
-                if (stored_tensors[momentumBiasIdx] == NULL)
-                    stored_tensors[momentumBiasIdx] = t_copy(momentumBias);
-                else
-                    t_elem_add(stored_tensors[momentumBiasIdx], momentumBias);
+                t_copy_or_add(&stored_tensors[momentumWeightsIdx], momentumWeights);
+                t_copy_or_add(&stored_tensors[momentumBiasIdx], momentumBias);
 
                 // momentum bias corrected
                 // m / (1 - beta1**(t + 1))
@@ -166,15 +112,8 @@ struct trainingpass *opt_adam(struct seqmodel *seq, param_t *params, int batchSi
                 t_mul_const(velocityBias, batchSizeFactor);
 
                 // update stored_tensors
-                if (stored_tensors[velocityWeightsIdx] == NULL)
-                    stored_tensors[velocityWeightsIdx] = t_copy(velocityWeights);
-                else
-                    t_elem_add(stored_tensors[velocityWeightsIdx], velocityWeights);
-
-                if (stored_tensors[velocityBiasIdx] == NULL)
-                    stored_tensors[velocityBiasIdx] = t_copy(velocityBias);
-                else
-                    t_elem_add(stored_tensors[velocityBiasIdx], velocityBias);
+                t_copy_or_add(&stored_tensors[velocityWeightsIdx], velocityWeights);
+                t_copy_or_add(&stored_tensors[velocityBiasIdx], velocityBias);
 
                 // velocity bias corrected
                 // m / (1 - beta1**(t + 1))
@@ -197,26 +136,15 @@ struct trainingpass *opt_adam(struct seqmodel *seq, param_t *params, int batchSi
         }
         for (int l = 0; l < seq->numLayers; l++)
         {
-            forwardstate_free(&forwardstates[t][l]);
+            forwardstate_free(&forwardstates[l]);
             backwardstate_free(localbackwardstates[l]);
         }
         mm_free(localbackwardstates);
-        mm_free(forwardstates[t]);
-    }
-    mm_free(forwardstates);
-    /**
-     * Prediction pass
-     */
-    for (int t = 0; t < batchSize; t++)
-    {
-        predictions[t] = seqmodel_predict(seq, inputs[t]);
+        mm_free(forwardstates);
     }
 
-    struct trainingpass *tp = trainingpass_init(lossFn(batchSize, predictions, truths), stored_tensors, seq->numLayers * 4);
-
-    // Free predictions
-    for (int t = 0; t < batchSize; t++)
-        t_free(predictions[t]);
+    param_t loss = seqmodel_calculate_loss(seq, batchSize, inputs, truths, lossFn);
+    struct trainingpass *tp = trainingpass_init(loss, stored_tensors, seq->numLayers * 4);
 
     return tp;
 }

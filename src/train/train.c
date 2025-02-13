@@ -16,7 +16,7 @@ void __train_mark_and_sweep(struct seqmodel *seq, int numExamples, tensor *input
     }
     if (tp != NULL)
         trainingpass_mark(tp);
-    optimizer_mark(opt);
+    opt_mark(opt);
 
     // sweep
     mm_sweep();
@@ -33,6 +33,10 @@ void train(struct seqmodel *seq, int numExamples, tensor *inputs[numExamples], t
 
     struct trainingpass *prev_pass = NULL;
 
+    printf("Initial Weights (Layer 2): \n");
+    struct denselayer_props *dp = (struct denselayer_props *)seq->layers[1]->layerProps;
+    t_print(dp->weights);
+
     while (!converged && iter < maxIter)
     {
         __train_mark_and_sweep(seq, numExamples, inputs, truths, opt, prev_pass);
@@ -40,7 +44,13 @@ void train(struct seqmodel *seq, int numExamples, tensor *inputs[numExamples], t
 
         struct trainingpass *next_pass = opt->run_opt(seq, opt->params, numExamples, inputs, truths, opt->lossFn, prev_pass, iter);
         current_loss = next_pass->loss;
-        printf("Iteration %i: loss=%.4f\n", iter, current_loss);
+        printf("Iteration %i: loss=%.4f", iter, current_loss);
+        if (iter == 0)
+            printf("\n");
+        else
+        {
+            printf("\r");
+        }
         if (prev_pass != NULL)
             trainingpass_free(prev_pass);
         prev_pass = next_pass;
@@ -50,5 +60,6 @@ void train(struct seqmodel *seq, int numExamples, tensor *inputs[numExamples], t
         converged = fabs(prev_loss - current_loss) < diffThreshold || current_loss < lossThreshold;
         iter++;
     }
+    printf("\n");
     trainingpass_free(prev_pass);
 }

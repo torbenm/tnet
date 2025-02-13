@@ -40,7 +40,7 @@ tensor *input_layer_forward(void *p, tensor *inputs, struct forwardstate *state)
     return inputs;
 }
 
-struct backwardstate *input_layer_backward(void *p, tensor *previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev, param_t learningRate)
+struct backwardstate *input_layer_backward(void *p, tensor *previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev)
 {
     return NULL; // should _not_ be used!
 }

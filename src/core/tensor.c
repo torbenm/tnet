@@ -116,6 +116,7 @@ tensor *t_alloc(int ndim, const int shape[ndim])
         t->shape[i] = shape[i];
     }
     t->ndim = ndim;
+
     t->v = mm_calloc(t->_v_size, sizeof(param_t));
     return t;
 }
@@ -174,6 +175,15 @@ tensor *t_copy(tensor *t)
         c->v[i] = t->v[i];
     }
     return c;
+}
+
+tensor *t_copy_or_add(tensor **dst, tensor *src)
+{
+    if (*dst == NULL)
+        *dst = t_copy(src);
+    else
+        t_elem_add(*dst, src);
+    return dst;
 }
 
 void t_free(tensor *t)

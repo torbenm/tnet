@@ -54,3 +54,13 @@ tensor *seqmodel_predict(struct seqmodel *seq, tensor *input)
     }
     return next_inputs;
 }
+
+param_t seqmodel_calculate_loss(struct seqmodel *seq, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], lossfunc *lossFn)
+{
+    tensor *predictions[batchSize];
+    for (int t = 0; t < batchSize; t++)
+    {
+        predictions[t] = seqmodel_predict(seq, inputs[t]);
+    }
+    return lossFn(batchSize, predictions, truths);
+}

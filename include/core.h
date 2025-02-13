@@ -32,6 +32,7 @@ tensor *t_alloc_single();
 tensor *t_alloc_single_from(param_t value);
 tensor *t_alloc_rand(int ndim, const int shape[ndim]);
 tensor *t_copy(tensor *t);
+tensor *t_copy_or_add(tensor **dst, tensor *src);
 void t_free(tensor *t);
 void t_init_rand(tensor *t);
 void t_init_const(tensor *t, const param_t cnst);

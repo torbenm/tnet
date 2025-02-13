@@ -10,7 +10,7 @@ x = np.array([[0, 0],
 y = np.array([[0, 1],
               [1, 0],
               [1, 0],
-              [0, 1]], dtype=np.float32)
+              [1, 0]], dtype=np.float32)
 
 
 # Define the model
