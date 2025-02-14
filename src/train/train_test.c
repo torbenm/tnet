@@ -9,7 +9,7 @@
 
 #define TEST_FAILURE 0
 #define TEST_SUCCESS 1
-#define E 0.00001
+#define E 0.000001
 
 // Some Gradient Checking happening here
 int test_dense_layer_gradients()
@@ -24,12 +24,13 @@ int test_dense_layer_gradients()
     struct seqmodel *s = seqmodel_init();
     seqmodel_push(s, input_layer_init(2));
     seqmodel_push(s, dense_layer_init(2, 2, av_tanh));
-    seqmodel_push(s, dense_layer_init(2, 2, av_softmax));
+    seqmodel_push(s, dense_layer_init(2, 2, av_identity));
+    seqmodel_push(s, softmax_layer_init());
 
     // Normal Pass
     tensor **predictions = malloc(sizeof(tensor *));
     struct forwardstate *forwardstates = opt_forwardpropagate(s, t_inputs, predictions);
-    printf("loss");
+
     struct backwardstate **backwardstates = opt_backwardpropagate(s, predictions[0], t_truths, forwardstates);
     param_t normal_loss = seqmodel_calculate_loss(s, 1, &t_inputs, &t_truths, loss_mse);
 

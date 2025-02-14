@@ -49,7 +49,7 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
         for (int l = 0; l < seq->numLayers; l++)
         {
 
-            if (localbackwardstates[l] != NULL)
+            if (localbackwardstates[l] != NULL && localbackwardstates[l]->weightGradients != NULL && localbackwardstates[l]->biasGradients != NULL)
             {
                 tensor *updateWeights = t_copy(localbackwardstates[l]->weightGradients);
                 tensor *updateBias = t_copy(localbackwardstates[l]->biasGradients);
@@ -96,13 +96,6 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
                 t_free(updateWeights);
             }
         }
-        for (int l = 0; l < seq->numLayers; l++)
-        {
-            forwardstate_free(&forwardstates[l]);
-            backwardstate_free(localbackwardstates[l]);
-        }
-        mm_free(localbackwardstates);
-        mm_free(forwardstates);
     }
 
     param_t loss = seqmodel_calculate_loss(seq, batchSize, inputs, truths, lossFn);

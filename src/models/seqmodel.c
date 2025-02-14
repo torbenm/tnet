@@ -1,8 +1,11 @@
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "core.h"
 #include "models.h"
+
+#define SEQMODEL_STD_SIZE 4
 
 struct seqmodel *seqmodel_init()
 {
@@ -18,7 +21,7 @@ void seqmodel_mark(struct seqmodel *seq)
     mm_mark(seq->layers);
     for (int l = 0; l < seq->numLayers; l++)
     {
-        seq->layers[l]->mark(seq->layers[l]);
+        seqmodel_layer_mark(seq->layers[l]);
     }
 }
 

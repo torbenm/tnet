@@ -36,12 +36,12 @@ struct trainingpass *opt_adam(struct seqmodel *seq, param_t *params, int batchSi
 
         struct forwardstate *forwardstates = opt_forwardpropagate(seq, inputs[t], &predictions[t]);
         struct backwardstate **localbackwardstates = opt_backwardpropagate(seq, predictions[t], truths[t], forwardstates);
-
         // Apply deltas pass
         for (int l = 0; l < seq->numLayers; l++)
         {
-
-            if (localbackwardstates[l] != NULL)
+            // Only able to update weights if we have a backwardstate.
+            // Some layers don't provide us one
+            if (localbackwardstates[l] != NULL && localbackwardstates[l]->weightGradients != NULL && localbackwardstates[l]->biasGradients != NULL)
             {
                 tensor *momentumWeights = t_copy(localbackwardstates[l]->weightGradients);
                 tensor *momentumBias = t_copy(localbackwardstates[l]->biasGradients);
@@ -134,13 +134,6 @@ struct trainingpass *opt_adam(struct seqmodel *seq, param_t *params, int batchSi
                 t_free(velocityWeights);
             }
         }
-        for (int l = 0; l < seq->numLayers; l++)
-        {
-            forwardstate_free(&forwardstates[l]);
-            backwardstate_free(localbackwardstates[l]);
-        }
-        mm_free(localbackwardstates);
-        mm_free(forwardstates);
     }
 
     param_t loss = seqmodel_calculate_loss(seq, batchSize, inputs, truths, lossFn);

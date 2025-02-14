@@ -38,6 +38,8 @@ void t_init_rand(tensor *t);
 void t_init_const(tensor *t, const param_t cnst);
 tensor *t_lock(tensor *t);
 void t_assert_not_locked(tensor *t);
+tensor *t_identity(int size);
+tensor *t_diag(tensor *vec);
 
 // Utils
 tensor *t_from_1dim_array(int d1_size, param_t array[d1_size]);
@@ -50,6 +52,7 @@ void t_print_shape(tensor *t);
 void t_calc_strides(tensor *t, int *outStrides);
 int t_get_flat_index(tensor *t, int *strides, int *indices);
 void t_get_indices(tensor *t, int flatIndex, int *strides, int *outIndices);
+tensor *t_flatten(tensor *dst);
 
 // Element wise operations (tensor x tensor and tensor x scalar)
 tensor *t_elem_add(tensor *dst, tensor *add);

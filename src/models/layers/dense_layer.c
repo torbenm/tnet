@@ -21,22 +21,17 @@ struct seqmodel_layer *dense_layer_init(int numNodes, int numInputs, activationf
 
     props->activationFn = activationFn;
 
-    // move somewhere else...
-    struct seqmodel_layer *l = mm_alloc(sizeof(struct seqmodel_layer));
-    l->layerProps = props;
-    l->numOutputs = numNodes;
-    l->forward = dense_layer_forward;
-    l->backward = dense_layer_backward;
-    l->update = dense_layer_update_weights;
-    l->mark = dense_layer_mark;
-    return l;
+    return seqmodel_layer_init(
+        props,
+        dense_layer_forward,
+        dense_layer_backward,
+        dense_layer_update,
+        dense_layer_mark_props);
 }
 
-void dense_layer_mark(struct seqmodel_layer *self)
+void dense_layer_mark_props(void *props)
 {
-    struct denselayer_props *dp = (struct denselayer_props *)self->layerProps;
-    mm_mark(self);
-    mm_mark(self->layerProps);
+    struct denselayer_props *dp = (struct denselayer_props *)props;
     t_mark(dp->bias);
     t_mark(dp->weights);
 }
@@ -52,7 +47,6 @@ tensor *dense_layer_forward(void *p, tensor *inputs, struct forwardstate *state)
 
     if (state != NULL)
     {
-        state->nOutputs = dp->numNodes;
         state->preActivations = preActivations;
         state->activations = activations;
     }
@@ -65,7 +59,7 @@ tensor *dense_layer_forward(void *p, tensor *inputs, struct forwardstate *state)
     return activations;
 }
 
-void dense_layer_update_weights(void *p, tensor *updateWeights, tensor *updateBias)
+void dense_layer_update(void *p, tensor *updateWeights, tensor *updateBias)
 {
     struct denselayer_props *dp = (struct denselayer_props *)p;
     // weights = weights - (weightGradients * updateFactor)
@@ -78,7 +72,7 @@ void dense_layer_update_weights(void *p, tensor *updateWeights, tensor *updateBi
 struct backwardstate *dense_layer_backward(void *p, tensor *previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev)
 {
     struct denselayer_props *dp = (struct denselayer_props *)p;
-    struct backwardstate *bs = backwardstate_alloc(dp->numNodes, dp->numInputs);
+    struct backwardstate *bs = backwardstate_alloc();
 
     tensor *activationDerivative = dp->activationFn(t_copy(curr->preActivations), FUNCS_DERIVATIVE);
     tensor *smallDelta = t_elem_mul(t_copy(previousSmallDelta), activationDerivative);

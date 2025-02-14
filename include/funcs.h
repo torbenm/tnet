@@ -10,9 +10,9 @@ typedef tensor *activationfunc(tensor *t, int mode);
 activationfunc av_relu;
 activationfunc av_logistic;
 activationfunc av_tanh;
-activationfunc av_softmax;
 activationfunc av_heaviside;
 activationfunc av_sigmoid;
+activationfunc av_identity;
 
 typedef param_t lossfunc(int numExamples, tensor *predictions[numExamples], tensor *truths[numExamples]);
 

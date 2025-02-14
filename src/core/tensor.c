@@ -8,19 +8,28 @@
 /**
  * Private tensor helper functions
  */
-void __assert_shape_equals(tensor *t1, tensor *t2)
+void __assert_ndims(tensor *t, int ndim)
 {
-    if (t1->ndim != t2->ndim)
+    if (t->ndim != ndim)
     {
-        error("Shapes are not equal!");
+        error("Shapes are not equal! Number of dimensions: %i != %i.", t->ndim, ndim);
     }
-    for (int i = 0; i < t1->ndim; i++)
+}
+void __assert_shape(tensor *t, int ndim, int *shape)
+{
+    __assert_ndims(t, ndim);
+    for (int i = 0; i < ndim; i++)
     {
-        if (t1->shape[i] != t2->shape[i])
+        if (t->shape[i] != shape[i])
         {
             error("Shapes are not equal!");
         }
     }
+}
+
+void __assert_shape_equals(tensor *t1, tensor *t2)
+{
+    __assert_shape(t1, t2->ndim, t2->shape);
 }
 
 void t_assert_not_locked(tensor *t)
@@ -183,7 +192,7 @@ tensor *t_copy_or_add(tensor **dst, tensor *src)
         *dst = t_copy(src);
     else
         t_elem_add(*dst, src);
-    return dst;
+    return *dst;
 }
 
 void t_free(tensor *t)
@@ -208,6 +217,29 @@ tensor *t_lock(tensor *t)
     if (t == NULL)
         return t;
     t->locked = 1;
+    return t;
+}
+
+tensor *t_identity(int size)
+{
+    int shape[2] = {size, size};
+    tensor *t = t_alloc(2, shape);
+    for (int i = 0; i < size; i++)
+    {
+        t->v[i * size + i] = 1;
+    }
+    return t;
+}
+
+tensor *t_diag(tensor *vec)
+{
+    __assert_ndims(vec, 1);
+    int shape[2] = {vec->_v_size, vec->_v_size};
+    tensor *t = t_alloc(2, shape);
+    for (int i = 0; i < vec->_v_size; i++)
+    {
+        t->v[i * vec->_v_size + i] = vec->v[i];
+    }
     return t;
 }
 
@@ -271,6 +303,17 @@ tensor *t_from_3dim_array(int d1_size, int d2_size, int d3_size, param_t array[d
 int t_is_single_element(tensor *t)
 {
     return t->ndim == 1 && t->shape[0] == 1;
+}
+
+tensor *t_flatten(tensor *dst)
+{
+    t_assert_not_locked(dst);
+    int *newShape = mm_alloc(sizeof(int) * 1);
+    newShape[0] = dst->_v_size;
+    dst->ndim = 1;
+    mm_free(dst->shape);
+    dst->shape = newShape;
+    return dst;
 }
 
 /**

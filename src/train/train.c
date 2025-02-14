@@ -33,15 +33,10 @@ void train(struct seqmodel *seq, int numExamples, tensor *inputs[numExamples], t
 
     struct trainingpass *prev_pass = NULL;
 
-    printf("Initial Weights (Layer 2): \n");
-    struct denselayer_props *dp = (struct denselayer_props *)seq->layers[1]->layerProps;
-    t_print(dp->weights);
-
     while (!converged && iter < maxIter)
     {
         __train_mark_and_sweep(seq, numExamples, inputs, truths, opt, prev_pass);
         prev_loss = current_loss;
-
         struct trainingpass *next_pass = opt->run_opt(seq, opt->params, numExamples, inputs, truths, opt->lossFn, prev_pass, iter);
         current_loss = next_pass->loss;
         printf("Iteration %i: loss=%.4f", iter, current_loss);
