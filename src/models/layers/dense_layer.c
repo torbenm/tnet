@@ -13,11 +13,11 @@ struct seqmodel_layer *dense_layer_init(int numNodes, int numInputs, activationf
 
     int weightsShape[2] = {numNodes, numInputs};
     props->weights = t_alloc(2, weightsShape);
-    t_init_rand(props->weights);
+    t_init_xavier(props->weights);
 
     int biasShape[1] = {numNodes};
     props->bias = t_alloc(1, biasShape);
-    t_init_rand(props->bias);
+    t_init_xavier(props->bias);
 
     props->activationFn = activationFn;
 
@@ -62,6 +62,7 @@ tensor *dense_layer_forward(void *p, tensor *inputs, struct forwardstate *state)
 void dense_layer_update(void *p, tensor *updateWeights, tensor *updateBias)
 {
     struct denselayer_props *dp = (struct denselayer_props *)p;
+
     // weights = weights - (weightGradients * updateFactor)
     t_elem_sub(dp->weights, updateWeights);
 

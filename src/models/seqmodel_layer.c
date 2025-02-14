@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "models.h"
 
 struct backwardstate *seqmodel_layer_backward_noop(void *p, tensor *previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev)

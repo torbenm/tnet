@@ -35,6 +35,7 @@ tensor *t_copy(tensor *t);
 tensor *t_copy_or_add(tensor **dst, tensor *src);
 void t_free(tensor *t);
 void t_init_rand(tensor *t);
+void t_init_xavier(tensor *t);
 void t_init_const(tensor *t, const param_t cnst);
 tensor *t_lock(tensor *t);
 void t_assert_not_locked(tensor *t);

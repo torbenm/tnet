@@ -168,6 +168,18 @@ void t_init_rand(tensor *t)
     }
 }
 
+void t_init_xavier(tensor *t)
+{
+    int scale_sum = 0;
+    for (int d = 0; d < t->ndim; d++)
+        scale_sum += t->shape[d];
+    param_t scale = sqrt(6.0 / (param_t)scale_sum);
+    for (int i = 0; i < t->_v_size; i++)
+    {
+        t->v[i] = scale * prand();
+    }
+}
+
 void t_init_const(tensor *t, const param_t cnst)
 {
     for (int i = 0; i < t->_v_size; i++)

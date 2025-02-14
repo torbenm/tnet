@@ -28,6 +28,8 @@ void opt_mark(struct optimizer *o)
 struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], lossfunc *lossFn, struct trainingpass *previouspass, int trainingPassNum)
 {
 
+    param_t batchSizeFactor = 1.0 / (param_t)batchSize;
+
     tensor *predictions[batchSize];
 
     param_t learningRate = params[0];
@@ -38,63 +40,86 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
      */
 
     struct tensor **stored_tensors = mm_calloc((seq->numLayers * 2), sizeof(struct tensor *));
+    struct tensor **totalWeightGradients = mm_alloc(seq->numLayers * sizeof(tensor *));
+    struct tensor **totalBiasGradients = mm_alloc(seq->numLayers * sizeof(tensor *));
 
     for (int t = 0; t < batchSize; t++)
     {
 
         struct forwardstate *forwardstates = opt_forwardpropagate(seq, inputs[t], &predictions[t]);
         struct backwardstate **localbackwardstates = opt_backwardpropagate(seq, predictions[t], truths[t], forwardstates);
-
         // Apply deltas pass
         for (int l = 0; l < seq->numLayers; l++)
         {
-
+            // Only able to update weights if we have a backwardstate.
+            // Some layers don't provide us one
             if (localbackwardstates[l] != NULL && localbackwardstates[l]->weightGradients != NULL && localbackwardstates[l]->biasGradients != NULL)
             {
-                tensor *updateWeights = t_copy(localbackwardstates[l]->weightGradients);
-                tensor *updateBias = t_copy(localbackwardstates[l]->biasGradients);
 
-                param_t batchSizeFactor = 1.0 / (param_t)batchSize;
-
-                int trainingpassWeightsIdx = l * 2;
-                int trainingpassBiasIdx = l * 2 + 1;
-
-                if (previouspass != NULL && previouspass->stored_tensors[trainingpassWeightsIdx] != NULL && previouspass->stored_tensors[trainingpassBiasIdx] != NULL)
-                {
-                    // monumentum
-                    tensor *prev_w_factored = t_mul_const(t_copy(previouspass->stored_tensors[trainingpassWeightsIdx]), monumentum);
-                    tensor *prev_b_factored = t_mul_const(t_copy(previouspass->stored_tensors[trainingpassBiasIdx]), monumentum);
-                    t_elem_add(t_mul_const(updateWeights, 1 - monumentum), prev_w_factored);
-                    t_elem_add(t_mul_const(updateBias, 1 - monumentum), prev_b_factored);
-                    t_free(prev_w_factored);
-                    t_free(prev_b_factored);
-                }
-
-                t_mul_const(updateWeights, batchSizeFactor);
-                t_mul_const(updateBias, batchSizeFactor);
-
-                // update stored_tensors
-                if (stored_tensors[trainingpassWeightsIdx] == NULL)
-                    stored_tensors[trainingpassWeightsIdx] = t_copy(updateWeights);
-                else
-                    t_elem_add(stored_tensors[trainingpassWeightsIdx], updateWeights);
-
-                if (stored_tensors[trainingpassBiasIdx] == NULL)
-                    stored_tensors[trainingpassBiasIdx] = t_copy(updateBias);
-                else
-                    t_elem_add(stored_tensors[trainingpassBiasIdx], updateBias);
-
-                t_mul_const(updateWeights, learningRate);
-                t_mul_const(updateBias, learningRate);
-
-                seq->layers[l]->update(
-                    seq->layers[l]->layerProps,
-                    updateWeights,
-                    updateBias);
-
-                t_free(updateBias);
-                t_free(updateWeights);
+                t_copy_or_add(&totalWeightGradients[l], localbackwardstates[l]->weightGradients);
+                t_copy_or_add(&totalBiasGradients[l], localbackwardstates[l]->biasGradients);
             }
+        }
+    }
+
+    // Apply deltas pass
+    for (int l = 0; l < seq->numLayers; l++)
+    {
+
+        if (totalWeightGradients[l] != NULL && totalBiasGradients[l] != NULL)
+        {
+            t_mul_const(totalWeightGradients[l], batchSizeFactor);
+            t_mul_const(totalBiasGradients[l], batchSizeFactor);
+
+            tensor *updateWeights = t_copy(totalWeightGradients[l]);
+            tensor *updateBias = t_copy(totalBiasGradients[l]);
+
+            int trainingpassWeightsIdx = l * 2;
+            int trainingpassBiasIdx = l * 2 + 1;
+
+            tensor *prev_w_factored;
+            tensor *prev_b_factored;
+            if (previouspass != NULL && previouspass->stored_tensors[trainingpassWeightsIdx] != NULL && previouspass->stored_tensors[trainingpassBiasIdx] != NULL)
+            {
+                // monumentum
+                prev_w_factored = t_mul_const(t_copy(previouspass->stored_tensors[trainingpassWeightsIdx]), monumentum);
+                prev_b_factored = t_mul_const(t_copy(previouspass->stored_tensors[trainingpassBiasIdx]), monumentum);
+            }
+            else
+            {
+                prev_w_factored = t_alloc(updateWeights->ndim, updateWeights->shape);
+                prev_b_factored = t_alloc(updateBias->ndim, updateBias->shape);
+            }
+
+            t_elem_add(t_mul_const(updateWeights, 1.0 - monumentum), prev_w_factored);
+            t_elem_add(t_mul_const(updateBias, 1.0 - monumentum), prev_b_factored);
+            t_free(prev_w_factored);
+            t_free(prev_b_factored);
+
+            t_mul_const(updateWeights, batchSizeFactor);
+            t_mul_const(updateBias, batchSizeFactor);
+
+            // update stored_tensors
+            if (stored_tensors[trainingpassWeightsIdx] == NULL)
+                stored_tensors[trainingpassWeightsIdx] = t_copy(updateWeights);
+            else
+                t_elem_add(stored_tensors[trainingpassWeightsIdx], updateWeights);
+
+            if (stored_tensors[trainingpassBiasIdx] == NULL)
+                stored_tensors[trainingpassBiasIdx] = t_copy(updateBias);
+            else
+                t_elem_add(stored_tensors[trainingpassBiasIdx], updateBias);
+
+            t_mul_const(updateWeights, learningRate);
+            t_mul_const(updateBias, learningRate);
+
+            seq->layers[l]->update(
+                seq->layers[l]->layerProps,
+                updateWeights,
+                updateBias);
+
+            t_free(updateBias);
+            t_free(updateWeights);
         }
     }
 

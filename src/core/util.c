@@ -7,7 +7,7 @@
 
 param_t prand()
 {
-    return (param_t)rand() / ((param_t)RAND_MAX);
+    return (param_t)rand() / RAND_MAX * 2.0 - 1.0;
 }
 
 void error(const char *msg, ...)
