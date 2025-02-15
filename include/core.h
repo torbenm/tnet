@@ -27,6 +27,7 @@ typedef struct tensor
 
 // alloc & init & locking
 tensor *t_alloc(int ndim, const int shape[ndim]);
+tensor *t_null();
 void t_mark(tensor *t);
 tensor *t_alloc_single();
 tensor *t_alloc_single_from(param_t value);

@@ -14,3 +14,4 @@ struct arguments
 };
 
 void command_train(struct arguments *args);
+void command_check(struct arguments *args);

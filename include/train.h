@@ -26,6 +26,7 @@ struct optimizer
 void opt_mark(struct optimizer *o);
 struct forwardstate *opt_forwardpropagate(struct seqmodel *seq, tensor *inputs, tensor **outPredictions);
 struct backwardstate **opt_backwardpropagate(struct seqmodel *seq, tensor *prediction, tensor *truth, struct forwardstate *forwardstates);
+void opt_fowardbackwardpass(struct seqmodel *s, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], tensor ***outWeightGradients, tensor ***outBiasGradients);
 param_t opt_calculateloss(struct seqmodel *seq, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], lossfunc *lossFn);
 
 // SGD
@@ -38,4 +39,4 @@ opt_func opt_adam;
 
 // Training function
 void train(struct seqmodel *seq, int numExamples, tensor *inputs[numExamples], tensor *truths[numExamples], int maxIter, struct optimizer *opt, param_t diffThreshold, param_t lossThreshold);
-void train_test();
+void check_gradients(struct seqmodel *s, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize]);

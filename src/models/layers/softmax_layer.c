@@ -31,15 +31,15 @@ tensor *softmax(tensor *t)
 struct seqmodel_layer *softmax_layer_init()
 {
     return seqmodel_layer_init(
-        NULL,
         "SOFTMAX",
-        softmax_layer_forward,
-        softmax_layer_backward,
         NULL,
-        NULL);
+        NULL,
+        NULL,
+        softmax_layer_forward,
+        softmax_layer_backward);
 }
 
-tensor *softmax_layer_forward(void *p, tensor *inputs, struct forwardstate *state)
+tensor *softmax_layer_forward(struct seqmodel_layer *self, tensor *inputs, struct forwardstate *state)
 {
     tensor *t = softmax(t_copy(inputs));
 
@@ -52,7 +52,7 @@ tensor *softmax_layer_forward(void *p, tensor *inputs, struct forwardstate *stat
     return t;
 }
 
-struct backwardstate *softmax_layer_backward(void *p, tensor *previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev)
+struct backwardstate *softmax_layer_backward(struct seqmodel_layer *self, tensor *previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev)
 {
     struct backwardstate *bs = backwardstate_alloc();
 

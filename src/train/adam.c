@@ -22,43 +22,21 @@ struct optimizer *opt_adam_init(param_t alpha, param_t beta1, param_t beta2, los
 
 struct trainingpass *opt_adam(struct seqmodel *seq, param_t *params, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], lossfunc *lossFn, struct trainingpass *previouspass, int trainingPassNum)
 {
-    tensor *predictions[batchSize];
 
     param_t alpha = params[0];
     param_t beta1 = params[1];
     param_t beta2 = params[2];
-    param_t batchSizeFactor = 1.0 / (param_t)batchSize;
 
     struct tensor **stored_tensors = mm_calloc((seq->numLayers * 4), sizeof(struct tensor *));
-    struct tensor **totalWeightGradients = mm_alloc(seq->numLayers * sizeof(tensor *));
-    struct tensor **totalBiasGradients = mm_alloc(seq->numLayers * sizeof(tensor *));
+    tensor **totalWeightGradients = mm_calloc(seq->numLayers, sizeof(tensor *));
+    tensor **totalBiasGradients = mm_calloc(seq->numLayers, sizeof(tensor *));
 
-    for (int t = 0; t < batchSize; t++)
-    {
-
-        struct forwardstate *forwardstates = opt_forwardpropagate(seq, inputs[t], &predictions[t]);
-        struct backwardstate **localbackwardstates = opt_backwardpropagate(seq, predictions[t], truths[t], forwardstates);
-        // Apply deltas pass
-        for (int l = 0; l < seq->numLayers; l++)
-        {
-            // Only able to update weights if we have a backwardstate.
-            // Some layers don't provide us one
-            if (localbackwardstates[l] != NULL && localbackwardstates[l]->weightGradients != NULL && localbackwardstates[l]->biasGradients != NULL)
-            {
-
-                t_copy_or_add(&totalWeightGradients[l], localbackwardstates[l]->weightGradients);
-                t_copy_or_add(&totalBiasGradients[l], localbackwardstates[l]->biasGradients);
-            }
-        }
-    }
+    opt_fowardbackwardpass(seq, batchSize, inputs, truths, &totalWeightGradients, &totalBiasGradients);
 
     for (int l = 0; l < seq->numLayers; l++)
     {
         if (totalWeightGradients[l] != NULL && totalBiasGradients[l] != NULL)
         {
-            t_mul_const(totalWeightGradients[l], batchSizeFactor);
-            t_mul_const(totalBiasGradients[l], batchSizeFactor);
-
             tensor *momentumWeights = t_copy(totalWeightGradients[l]);
             tensor *momentumBias = t_copy(totalBiasGradients[l]);
             tensor *velocityWeights = t_copy(totalWeightGradients[l]);
@@ -134,7 +112,7 @@ struct trainingpass *opt_adam(struct seqmodel *seq, param_t *params, int batchSi
             tensor *updateBias = t_mul_const(t_elem_div(momentumBias, t_add_const(t_apply(velocityBias, sqrt), EPSILON)), alpha * 0.1);
 
             seq->layers[l]->update(
-                seq->layers[l]->layerProps,
+                seq->layers[l],
                 updateWeights,
                 updateBias);
 

@@ -16,8 +16,6 @@ void forwardstate_lock(struct forwardstate *f);
 
 struct backwardstate
 {
-    int numNodes;
-    int numInputs;
     tensor *weightGradients;
     tensor *biasGradients;
     tensor *smallDelta;
@@ -31,19 +29,24 @@ void backwardstate_mark(struct backwardstate *);
 /**
  * Seqmodel & its possible models
  */
-typedef tensor *seqmodel_layer_forward(void *layer_struct, tensor *input, struct forwardstate *state);
-typedef struct backwardstate *seqmodel_layer_backward(void *p, tensor *previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev);
-typedef void seqmodel_layer_update_weights(void *p, tensor *updateWeights, tensor *updateBias);
+typedef struct seqmodel_layer seqmodel_layer;
+
+typedef tensor *seqmodel_layer_forward(seqmodel_layer *self, tensor *input, struct forwardstate *state);
+typedef struct backwardstate *seqmodel_layer_backward(seqmodel_layer *self, tensor *previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev);
+typedef void seqmodel_layer_update(seqmodel_layer *self, tensor *updateWeights, tensor *updateBias);
+
 struct seqmodel_layer
 {
-    void *layerProps;
     const char *name;
+    tensor *weights;
+    tensor *bias;
+    activationfunc *activationFn;
     seqmodel_layer_forward *forward;
     seqmodel_layer_backward *backward;
-    seqmodel_layer_update_weights *update;
-    void (*markProps)(void *);
+    seqmodel_layer_update *update;
 };
-struct seqmodel_layer *seqmodel_layer_init(void *props, const char *name, seqmodel_layer_forward *forward, seqmodel_layer_backward *backward, seqmodel_layer_update_weights *update, void (*markProps)(void *));
+
+struct seqmodel_layer *seqmodel_layer_init(const char *name, tensor *weights, tensor *bias, activationfunc *activationFn, seqmodel_layer_forward *forward, seqmodel_layer_backward *backward);
 void seqmodel_layer_mark(struct seqmodel_layer *self);
 void seqmodel_layer_print(struct seqmodel_layer *self);
 
@@ -64,30 +67,15 @@ param_t seqmodel_calculate_loss(struct seqmodel *seq, int batchSize, tensor *inp
 /**
  * Fully Connected / Dense Layer
  */
-struct denselayer_props
-{
-    int numNodes;
-    int numInputs;
-    tensor *weights;
-    tensor *bias;
-    activationfunc *activationFn;
-};
 
 struct seqmodel_layer *dense_layer_init(int numNodes, int numInputs, activationfunc *activationFn);
 seqmodel_layer_forward dense_layer_forward;
 seqmodel_layer_backward dense_layer_backward;
-seqmodel_layer_update_weights dense_layer_update;
-void dense_layer_mark_props(void *props);
-
-struct inputlayer_props
-{
-    int numInputs;
-};
 
 /**
  * Input Layer - may be used as initial layer.
  */
-struct seqmodel_layer *input_layer_init(int numInputs);
+struct seqmodel_layer *input_layer_init();
 seqmodel_layer_forward input_layer_forward;
 
 /**

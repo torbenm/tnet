@@ -81,6 +81,10 @@ int main(int argc, char **argv)
     {
         command_train(&arguments);
     }
+    else if (strcmp(arguments.subcommand, "check") == 0)
+    {
+        command_check(&arguments);
+    }
     else
     {
         fprintf(stderr, "Unknown subcommand: %s\n", arguments.subcommand);

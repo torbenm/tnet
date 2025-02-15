@@ -48,3 +48,20 @@ void command_train(struct arguments *args)
         t_print(seqmodel_predict(s, inputs[i]));
     }
 }
+
+void command_check(struct arguments *args)
+{
+    print_header("Loading models & inputs from file");
+    int numInputs, numTruths;
+    tensor **inputs = tensor_array_from_file(args->inputs, &numInputs);
+    tensor **truths = tensor_array_from_file(args->truths, &numTruths);
+
+    if (numInputs != numTruths)
+        error("Can only train when number of inputs equals number of truths - got %i != %i.", numInputs, numTruths);
+
+    struct seqmodel *s = seqmodel_from_file(args->model);
+    seqmodel_print(s);
+
+    print_header("Checking gradients.");
+    check_gradients(s, numInputs, inputs, truths);
+}

@@ -58,7 +58,7 @@ tensor *seqmodel_predict(struct seqmodel *seq, tensor *input)
     tensor *next_inputs = input;
     for (int i = 0; i < seq->numLayers; i++)
     {
-        tensor *output = seq->layers[i]->forward(seq->layers[i]->layerProps, next_inputs, NULL);
+        tensor *output = seq->layers[i]->forward(seq->layers[i], next_inputs, NULL);
         if (i > 1) // making sure we are not freeing the original inputs
             t_free(next_inputs);
         next_inputs = output;

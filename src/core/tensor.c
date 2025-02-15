@@ -130,6 +130,14 @@ tensor *t_alloc(int ndim, const int shape[ndim])
     return t;
 }
 
+/**
+ * Creates an empty tensor.
+ */
+tensor *t_null()
+{
+    return t_alloc(0, NULL);
+}
+
 void t_mark(tensor *t)
 {
     if (t == NULL)

@@ -41,7 +41,7 @@ void train(struct seqmodel *seq, int numExamples, tensor *inputs[numExamples], t
         prev_loss = current_loss;
         struct trainingpass *next_pass = opt->run_opt(seq, opt->params, numExamples, inputs, truths, opt->lossFn, prev_pass, iter);
         current_loss = next_pass->loss;
-        printf("Iteration %i: loss=%.4f", iter, current_loss);
+        printf("Epoch %8i: loss=%.4f", iter, current_loss);
         if (iter == 0)
             printf("\n");
         else

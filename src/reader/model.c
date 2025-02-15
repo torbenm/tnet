@@ -28,7 +28,7 @@ struct seqmodel_layer *seqmodel_layer_from_csv(const char *layer_type, csv_reade
 {
     if (strcmp(layer_type, "INPUT") == 0)
     {
-        return input_layer_init(csv_next_field_int(c));
+        return input_layer_init();
     }
     if (strcmp(layer_type, "DENSE") == 0)
     {

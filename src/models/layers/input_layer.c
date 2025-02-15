@@ -4,20 +4,17 @@
 #include "funcs.h"
 #include "models.h"
 
-struct seqmodel_layer *input_layer_init(int numInputs)
+struct seqmodel_layer *input_layer_init()
 {
-    return seqmodel_layer_init(NULL, "INPUT", input_layer_forward, NULL, NULL, NULL);
+    return seqmodel_layer_init("INPUT", NULL, NULL, NULL, input_layer_forward, NULL);
 }
 
-tensor *input_layer_forward(void *p, tensor *inputs, struct forwardstate *state)
+tensor *input_layer_forward(struct seqmodel_layer *self, tensor *inputs, struct forwardstate *state)
 {
-    struct inputlayer_props *ip = (struct inputlayer_props *)p;
-
     if (state != NULL)
     {
         state->preActivations = t_copy(inputs);
         state->activations = t_copy(inputs);
     }
-
     return inputs;
 }
