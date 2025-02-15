@@ -84,6 +84,7 @@ void tnet_init();
 param_t prand();
 void error(const char *msg, ...);
 void print_int_array(int *a, int size);
+void print_header(const char *msg, ...);
 
 // testing...
 void tensor_test();

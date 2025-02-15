@@ -1,71 +1,91 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <argp.h>
 
-#include "examples.h"
+#include "cli.h"
 #include "core.h"
-#include "reader.h"
-#include "train.h"
 
-struct clifunc
-{
-    const char *name;
-    void (*func)(void);
-};
+const char *argp_program_version = "tnet 0.1";
 
-struct clifunc *clifunc_init(const char *name, void (*func)(void))
-{
-    struct clifunc *cf = calloc(1, sizeof(struct clifunc));
-    cf->name = name;
-    cf->func = func;
-    return cf;
-}
+/* The options for the 'train' subcommand. */
+static struct argp_option train_options[] = {
+    {"model", 'm', "STRING", 0, "Model string"},
+    {"inputs", 'i', "STRING", 0, "Inputs string"},
+    {"truths", 't', "STRING", 0, "Truths string"},
+    {"opt", 'o', "STRING", 0, "Optimizer ('adam' or 'sgd')"},
+    {0}};
 
-int clifunc_iterexec(int numFuncs, struct clifunc *clifuncs[numFuncs], char *funcName)
+/* Parse a single option. */
+static error_t parse_opt(int key, char *arg, struct argp_state *state)
 {
-    for (int i = 0; i < numFuncs; i++)
+    struct arguments *arguments = state->input;
+
+    switch (key)
     {
-        if (strcmp(funcName, clifuncs[i]->name) == 0)
+    case 'm':
+        arguments->model = arg;
+        break;
+    case 'i':
+        arguments->inputs = arg;
+        break;
+    case 't':
+        arguments->truths = arg;
+        break;
+    case 'o':
+        if (strcmp(arg, "adam") == 0)
+            arguments->opt = OPT_ADAM;
+        else if (strcmp(arg, "sgd") == 0)
+            arguments->opt = OPT_SGD;
+        else
+            argp_error(state, "Invalid value for --opt: %s", arg);
+        break;
+    case ARGP_KEY_ARG:
+        if (state->arg_num == 0)
         {
-            clifuncs[i]->func();
-            return 0;
+            arguments->subcommand = arg;
         }
+        else
+        {
+            argp_usage(state);
+        }
+        break;
+    case ARGP_KEY_END:
+        if (state->arg_num < 1)
+        {
+            argp_usage(state);
+        }
+        break;
+    default:
+        return ARGP_ERR_UNKNOWN;
     }
-    printf("No such function: %s. Valid values:\n", funcName);
-    for (int i = 0; i < numFuncs; i++)
-    {
-        printf("- %s\n", clifuncs[i]->name);
-    }
-    return 1;
+    return 0;
 }
 
+/* Subcommand parsers. */
+static struct argp train_argp = {train_options, parse_opt, "[train|perceptron] [OPTIONS]", "tnet let's you train and run models."};
+
+/* Main entry point. */
 int main(int argc, char **argv)
 {
-    const int numFuncs = 8;
-    struct clifunc *funcs[numFuncs] = {
-        clifunc_init("perceptron-or", perceptron_example_OR),
-        clifunc_init("perceptron-and", perceptron_example_AND),
-        clifunc_init("perceptron-xor", perceptron_example_XOR),
-        clifunc_init("seq-xor", seq_example_XOR),
-        clifunc_init("seq-and", seq_example_AND),
-        clifunc_init("seq-or", seq_example_OR),
-        clifunc_init("train-test", train_test),   // bit hacky way to include testing...
-        clifunc_init("tensor-test", tensor_test), // bit hacky way to include testing...
-    };
-
     tnet_init();
-    if (argc == 2)
+
+    struct arguments arguments;
+    memset(&arguments, 0, sizeof(arguments));
+
+    /* Parse the arguments. */
+    argp_parse(&train_argp, argc, argv, ARGP_IN_ORDER, 0, &arguments);
+
+    /* Execute the chosen subcommand. */
+    if (strcmp(arguments.subcommand, "train") == 0)
     {
-        return clifunc_iterexec(numFuncs, funcs, argv[1]);
+        command_train(&arguments);
     }
     else
     {
-        printf("Unknown number of args: %i, only one expected. Valid values:\n", argc - 1);
-        for (int i = 0; i < numFuncs; i++)
-        {
-            printf("- %s\n", funcs[i]->name);
-        }
-        return 1;
+        fprintf(stderr, "Unknown subcommand: %s\n", arguments.subcommand);
+        return EXIT_FAILURE;
     }
-    return 0;
+
+    return EXIT_SUCCESS;
 }

@@ -16,8 +16,14 @@ Features currently included:
 
 ## Dependencies
 
-- Cmake (install with `brew install cmake`)
-- Probably just works on MacOS
+- Cmake (install with )
+- Argp. Comes directly with linux, but has to be installed with MacOS.
+
+Install the dependencies on macos with:
+```
+brew install cmake
+brew install argp
+```
 
 ## Building
 

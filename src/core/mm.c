@@ -12,7 +12,7 @@
  */
 
 /**
- * Defines the maximum number of pointers -currently hardcoded
+ * Defines the maximum number of pointers - currently hardcoded
  */
 #define MAX_MEMORY_POINTERS 4096
 

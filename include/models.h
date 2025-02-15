@@ -28,19 +28,6 @@ void backwardstate_free(struct backwardstate *);
 void backwardstate_lock(struct backwardstate *);
 void backwardstate_mark(struct backwardstate *);
 
-// Perceptron - tensor
-struct perceptron
-{
-    tensor *bias;
-    tensor *weights;
-    activationfunc *activationFn;
-};
-
-tensor *perceptron_forward(struct perceptron *p, tensor *vals);
-int perceptron_train(struct perceptron *p, int maxIter, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], param_t learningRate);
-struct perceptron *perceptron_init(int numWeights);
-void perceptron_free(struct perceptron *p);
-
 /**
  * Seqmodel & its possible models
  */
