@@ -32,6 +32,7 @@ struct seqmodel_layer *softmax_layer_init()
 {
     return seqmodel_layer_init(
         NULL,
+        "SOFTMAX",
         softmax_layer_forward,
         softmax_layer_backward,
         NULL,

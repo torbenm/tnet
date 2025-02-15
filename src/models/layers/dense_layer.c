@@ -23,6 +23,7 @@ struct seqmodel_layer *dense_layer_init(int numNodes, int numInputs, activationf
 
     return seqmodel_layer_init(
         props,
+        "DENSE",
         dense_layer_forward,
         dense_layer_backward,
         dense_layer_update,

@@ -6,7 +6,7 @@
 
 struct seqmodel_layer *input_layer_init(int numInputs)
 {
-    return seqmodel_layer_init(NULL, input_layer_forward, NULL, NULL, NULL);
+    return seqmodel_layer_init(NULL, "INPUT", input_layer_forward, NULL, NULL, NULL);
 }
 
 tensor *input_layer_forward(void *p, tensor *inputs, struct forwardstate *state)

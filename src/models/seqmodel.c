@@ -45,6 +45,14 @@ void seqmodel_push(struct seqmodel *seq, struct seqmodel_layer *layer)
     seq->layers[seq->numLayers++] = layer;
 }
 
+void seqmodel_print(struct seqmodel *s)
+{
+    for (int l = 0; l < s->numLayers; l++)
+    {
+        seqmodel_layer_print(s->layers[l]);
+    }
+}
+
 tensor *seqmodel_predict(struct seqmodel *seq, tensor *input)
 {
     tensor *next_inputs = input;

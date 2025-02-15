@@ -50,13 +50,15 @@ typedef void seqmodel_layer_update_weights(void *p, tensor *updateWeights, tenso
 struct seqmodel_layer
 {
     void *layerProps;
+    const char *name;
     seqmodel_layer_forward *forward;
     seqmodel_layer_backward *backward;
     seqmodel_layer_update_weights *update;
     void (*markProps)(void *);
 };
-struct seqmodel_layer *seqmodel_layer_init(void *props, seqmodel_layer_forward *forward, seqmodel_layer_backward *backward, seqmodel_layer_update_weights *update, void (*markProps)(void *));
+struct seqmodel_layer *seqmodel_layer_init(void *props, const char *name, seqmodel_layer_forward *forward, seqmodel_layer_backward *backward, seqmodel_layer_update_weights *update, void (*markProps)(void *));
 void seqmodel_layer_mark(struct seqmodel_layer *self);
+void seqmodel_layer_print(struct seqmodel_layer *self);
 
 struct seqmodel
 {
@@ -68,6 +70,7 @@ struct seqmodel *seqmodel_init();
 void seqmodel_resize(struct seqmodel *seq, int newSize);
 void seqmodel_push(struct seqmodel *seq, struct seqmodel_layer *layer);
 void seqmodel_mark(struct seqmodel *seq);
+void seqmodel_print(struct seqmodel *s);
 tensor *seqmodel_predict(struct seqmodel *seq, tensor *input);
 param_t seqmodel_calculate_loss(struct seqmodel *seq, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], lossfunc *lossFn);
 
