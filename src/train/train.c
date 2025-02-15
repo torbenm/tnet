@@ -9,6 +9,8 @@ void __train_mark_and_sweep(struct seqmodel *seq, int numExamples, tensor *input
 {
     // mark
     seqmodel_mark(seq);
+    mm_mark(inputs);
+    mm_mark(truths);
     for (int i = 0; i < numExamples; i++)
     {
         t_mark(inputs[i]);

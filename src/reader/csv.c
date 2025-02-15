@@ -36,16 +36,19 @@ char *csv_next_field(csv_reader *c)
     int buf_ptr;
     char ch;
     int isEscaped = 0;
-    for (buf_ptr = 0; buf_ptr < BUFFER_SIZE; buf_ptr++)
+    for (buf_ptr = 0; buf_ptr < BUFFER_SIZE;)
     {
         ch = fgetc(c->file);
-        if (ch == EOF || ch == '\n')
+        if (ch == '\n')
         {
             // going one char back in the file to allow 'csv_seek_next_line'
             // to be called
-            fseek(c->file, -1, SEEK_CUR);
+            // printf(" %lu ", ftell(c->file));
+            fseek(c->file, -1, SEEK_CUR); // maybe this is wrong
             break;
         }
+        else if (ch == EOF)
+            break;
         if (ch == ESCAPE)
         {
             isEscaped = !isEscaped;
@@ -53,10 +56,13 @@ char *csv_next_field(csv_reader *c)
         }
         else if (ch == DELIMITER && !isEscaped)
             break; // skipping to end of loop
-        buffer[buf_ptr] = ch;
+        // printf("++%x", ch);
+        buffer[buf_ptr++] = ch;
     }
     if (buf_ptr == 0)
+    {
         return NULL;
+    }
     buffer[buf_ptr++] = '\0';
     char *r = mm_alloc(sizeof(char) * buf_ptr);
 
@@ -67,9 +73,8 @@ char *csv_next_field(csv_reader *c)
 /**
  * Reads the next field (until ';') and returns it as a parsed param
  */
-param_t csv_next_field_param(csv_reader *c)
+param_t str_to_param(const char *field)
 {
-    char *field = csv_next_field(c);
     if (field == NULL)
         error("Could not read non-nullable field that is null as param.");
     int result = (param_t)strtod(field, (char **)NULL);

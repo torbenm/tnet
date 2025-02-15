@@ -12,67 +12,44 @@
 #define LEARNING_RATE 0.1
 #define MONUMENTUM 0.9
 
-void seq_example_EXEC(param_t values[4][2], param_t truths[4][2])
+void seq_example_EXEC(const char *inputsFile, const char *truthsFile)
 {
+    int numInputs, numTruths;
+    tensor **inputs = tensor_array_from_file(inputsFile, &numInputs);
+    tensor **truths = tensor_array_from_file(truthsFile, &numTruths);
 
-    tensor *t_values[4] = {
-        t_lock(t_from_1dim_array(2, values[0])),
-        t_lock(t_from_1dim_array(2, values[1])),
-        t_lock(t_from_1dim_array(2, values[2])),
-        t_lock(t_from_1dim_array(2, values[3])),
-    };
+    if (numInputs != numTruths)
+        error("Can only train when number of inputs equals number of truths - got %i != %i.", numInputs, numTruths);
 
-    tensor *t_truths[4] = {
-        t_lock(t_from_1dim_array(2, truths[0])),
-        t_lock(t_from_1dim_array(2, truths[1])),
-        t_lock(t_from_1dim_array(2, truths[2])),
-        t_lock(t_from_1dim_array(2, truths[3])),
-    };
-
-    struct seqmodel *s = seqmodel_from_file("./data/models/basic_ops.csv");
+    struct seqmodel *s = seqmodel_from_file("./data/binary_ops/model.csv");
     seqmodel_print(s);
 
     for (int i = 0; i < 4; i++)
     {
-        t_print(seqmodel_predict(s, t_values[i]));
+        t_print(seqmodel_predict(s, inputs[i]));
     }
     struct optimizer *o = opt_sgd_init(0.1, 0, loss_mse);
     // struct optimizer *o = opt_adam_init(0.1, 0.9, 0.999, loss_mse);
 
-    train(s, 4, t_values, t_truths, MAX_ITER, o, DIFF_THRESHOLD, COST_THRESHOLD);
+    train(s, numInputs, inputs, truths, MAX_ITER, o, DIFF_THRESHOLD, COST_THRESHOLD);
 
     for (int i = 0; i < 4; i++)
     {
-        t_print(seqmodel_predict(s, t_values[i]));
+        t_print(seqmodel_predict(s, inputs[i]));
     }
 }
 
 void seq_example_XOR()
 {
-    param_t values[4][2] = {{0.0, 0.0},
-                            {0.0, 1.0},
-                            {1.0, 0.0},
-                            {1.0, 1.0}};
-    param_t truths[4][2] = {{0.0, 1.0}, {1.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}};
-    seq_example_EXEC(values, truths);
+    seq_example_EXEC("data/binary_ops/inputs.csv", "data/binary_ops/truth_xor.csv");
 }
 
 void seq_example_OR()
 {
-    param_t values[4][2] = {{0.0, 0.0},
-                            {0.0, 1.0},
-                            {1.0, 0.0},
-                            {1.0, 1.0}};
-    param_t truths[4][2] = {{0.0, 1.0}, {1.0, 0.0}, {1.0, 0.0}, {1.0, 0.0}};
-    seq_example_EXEC(values, truths);
+    seq_example_EXEC("data/binary_ops/inputs.csv", "./data/binary_ops/truth_or.csv");
 }
 
 void seq_example_AND()
 {
-    param_t values[4][2] = {{0.0, 0.0},
-                            {0.0, 1.0},
-                            {1.0, 0.0},
-                            {1.0, 1.0}};
-    param_t truths[4][2] = {{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}, {1.0, 0.0}};
-    seq_example_EXEC(values, truths);
+    seq_example_EXEC("data/binary_ops/inputs.csv", "./data/binary_ops/truth_and.csv");
 }

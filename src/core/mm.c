@@ -55,7 +55,7 @@ void *mm_alloc(size_t __size)
 {
     __mm_compact_if_needed();
     MEMORY_POINTERS[next_memory_ptr] = malloc(__size);
-    if (MEMORY_POINTERS[next_markd_ptr] == NULL)
+    if (MEMORY_POINTERS[next_memory_ptr] == NULL)
     {
         error("Failed to allocate memory with malloc.");
     }
@@ -66,7 +66,7 @@ void *mm_calloc(size_t __count, size_t __size)
     __mm_compact_if_needed();
 
     MEMORY_POINTERS[next_memory_ptr] = calloc(__count, __size);
-    if (MEMORY_POINTERS[next_markd_ptr] == NULL)
+    if (MEMORY_POINTERS[next_memory_ptr] == NULL)
     {
         error("Failed to allocate memory with calloc.");
     }

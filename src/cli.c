@@ -41,7 +41,7 @@ int clifunc_iterexec(int numFuncs, struct clifunc *clifuncs[numFuncs], char *fun
 
 int main(int argc, char **argv)
 {
-    const int numFuncs = 9;
+    const int numFuncs = 8;
     struct clifunc *funcs[numFuncs] = {
         clifunc_init("perceptron-or", perceptron_example_OR),
         clifunc_init("perceptron-and", perceptron_example_AND),
@@ -51,7 +51,6 @@ int main(int argc, char **argv)
         clifunc_init("seq-or", seq_example_OR),
         clifunc_init("train-test", train_test),   // bit hacky way to include testing...
         clifunc_init("tensor-test", tensor_test), // bit hacky way to include testing...
-        clifunc_init("csv-test", test_csv),       // bit hacky way to include testing...
     };
 
     tnet_init();

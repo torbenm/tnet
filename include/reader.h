@@ -14,11 +14,11 @@ void csv_close(csv_reader *c);
 int csv_seek_next_line(csv_reader *c);
 char *csv_next_field(csv_reader *c);
 int csv_next_field_int(csv_reader *c);
-param_t csv_next_field_param(csv_reader *c);
-
-// test
-void test_csv();
+param_t str_to_param(const char *field);
 
 struct seqmodel *seqmodel_from_file(const char *filename);
 struct seqmodel_layer *seqmodel_layer_from_csv(const char *layer_type, csv_reader *c);
 activationfunc *activationfunc_from_str(const char *name);
+
+tensor *tensor_from_csv_1dim(csv_reader *c);
+tensor **tensor_array_from_file(const char *filename, int *outNumRows);
