@@ -11,7 +11,7 @@ tensor *av_identity(tensor *t, int activationMode)
     else
     {
         for (int i = 0; i < t->_v_size; i++)
-            t->v[i] = 1;
+            t->v[i] = 2;
     }
     return t;
 }

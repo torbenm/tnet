@@ -14,7 +14,7 @@ param_t loss_mse_forward(tensor *p, tensor *t)
 
 tensor *loss_mse_backward(tensor *p, tensor *t)
 {
-    return t_elem_sub(t_copy(p), t);
+    return t_mul_const(t_elem_sub(t_copy(p), t), 2);
 }
 
 loss *loss_mse()

@@ -20,7 +20,15 @@ param_t loss_binary_cross_entropy_forward(tensor *p, tensor *t)
 
 tensor *loss_binary_cross_entropy_backward(tensor *p, tensor *t)
 {
-    return t_elem_sub(t_copy(p), t);
+    // return t_elem_sub(t_copy(p), t);
+    tensor *grad = t_alloc(p->ndim, p->shape);
+    for (int j = 0; j < t->_v_size; j++)
+    {
+        param_t y = t->v[j];
+        param_t y_hat = clip(p->v[j], EPSILON, 1 - EPSILON);
+        grad->v[j] = -(y / y_hat) + ((1 - y) / (1 - y_hat));
+    }
+    return grad;
 }
 
 loss *loss_binary_cross_entropy()

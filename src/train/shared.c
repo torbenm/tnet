@@ -7,7 +7,6 @@
 void opt_fowardbackwardpass(struct seqmodel *s, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], tensor ***outWeightGradients, tensor ***outBiasGradients, loss *loss)
 {
     tensor *predictions[batchSize];
-    param_t batchSizeFactor = 1.0 / (param_t)batchSize;
 
     for (int t = 0; t < batchSize; t++)
     {
@@ -54,7 +53,6 @@ struct forwardstate *opt_forwardpropagate(struct seqmodel *seq, tensor *inputs, 
 
 struct backwardstate **opt_backwardpropagate(struct seqmodel *seq, tensor *prediction, tensor *truth, struct forwardstate *forwardstates, loss *loss)
 {
-    // initialize with derivative of mse (TODO: replace with function call)
     tensor *nextDelta = loss->backward(prediction, truth);
     struct backwardstate **backwardstates = mm_alloc(seq->numLayers * sizeof(struct backwardstate *));
     // Calculate deltas pass

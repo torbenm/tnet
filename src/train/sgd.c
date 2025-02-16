@@ -7,14 +7,14 @@
 #include "train.h"
 #include "funcs.h"
 
-struct optimizer *opt_sgd_init(param_t learningRate, param_t monumentum, loss *loss)
+struct optimizer *opt_sgd_init(param_t learningRate, param_t momentum, loss *loss)
 {
     optimizer *o = mm_alloc(sizeof(struct optimizer));
     o->name = "SGD";
     o->numParams = 2;
     o->params = mm_alloc(o->numParams * sizeof(param_t));
     o->params[0] = learningRate;
-    o->params[1] = monumentum;
+    o->params[1] = momentum;
     o->run_opt = opt_sgd;
     o->loss = loss;
     return o;
@@ -24,7 +24,7 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
 {
 
     param_t learningRate = params[0];
-    param_t monumentum = params[1];
+    param_t momentum = params[1];
 
     /**
      * Backwardpass
@@ -51,9 +51,9 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
             tensor *prev_b_factored;
             if (previouspass != NULL && previouspass->stored_tensors[trainingpassWeightsIdx] != NULL && previouspass->stored_tensors[trainingpassBiasIdx] != NULL)
             {
-                // monumentum
-                prev_w_factored = t_mul_const(t_copy(previouspass->stored_tensors[trainingpassWeightsIdx]), monumentum);
-                prev_b_factored = t_mul_const(t_copy(previouspass->stored_tensors[trainingpassBiasIdx]), monumentum);
+                // momentum
+                prev_w_factored = t_mul_const(t_copy(previouspass->stored_tensors[trainingpassWeightsIdx]), momentum);
+                prev_b_factored = t_mul_const(t_copy(previouspass->stored_tensors[trainingpassBiasIdx]), momentum);
             }
             else
             {
@@ -61,21 +61,14 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
                 prev_b_factored = t_alloc(updateBias->ndim, updateBias->shape);
             }
 
-            t_elem_add(t_mul_const(updateWeights, 1.0 - monumentum), prev_w_factored);
-            t_elem_add(t_mul_const(updateBias, 1.0 - monumentum), prev_b_factored);
+            t_elem_add(t_mul_const(updateWeights, 1.0 - momentum), prev_w_factored);
+            t_elem_add(t_mul_const(updateBias, 1.0 - momentum), prev_b_factored);
             t_free(prev_w_factored);
             t_free(prev_b_factored);
 
             // update stored_tensors
-            if (stored_tensors[trainingpassWeightsIdx] == NULL)
-                stored_tensors[trainingpassWeightsIdx] = t_copy(updateWeights);
-            else
-                t_elem_add(stored_tensors[trainingpassWeightsIdx], updateWeights);
-
-            if (stored_tensors[trainingpassBiasIdx] == NULL)
-                stored_tensors[trainingpassBiasIdx] = t_copy(updateBias);
-            else
-                t_elem_add(stored_tensors[trainingpassBiasIdx], updateBias);
+            t_copy_or_add(&stored_tensors[trainingpassWeightsIdx], updateWeights);
+            t_copy_or_add(&stored_tensors[trainingpassBiasIdx], updateBias);
 
             t_mul_const(updateWeights, learningRate);
             t_mul_const(updateBias, learningRate);

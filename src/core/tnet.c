@@ -4,7 +4,8 @@
 
 void tnet_init()
 {
+    // srand(100);
     srand(time(NULL));
-    rand();
+    // srand(35);
     setbuf(stdout, 0);
 }

@@ -7,11 +7,18 @@ struct backwardstate *seqmodel_layer_backward_noop(struct seqmodel_layer *self, 
     return NULL; // should _not_ be used!
 }
 
-void seqmodel_layer_update_noop(struct seqmodel_layer *self, tensor *updateWeights, tensor *updateBias)
+void seqmodel_layer_update_std(struct seqmodel_layer *self, tensor *updateWeights, tensor *updateBias)
 {
     // weights = weights - (weightGradients * updateFactor)
     t_elem_sub(self->weights, updateWeights);
 
+    // hotfix for bias shape. see dense layer implementation...
+    if (updateBias->ndim > 1)
+    {
+        // TODO: solve this nicer
+        updateBias->shape[0] = updateBias->shape[1];
+        updateBias->ndim = 1;
+    }
     // bias = bias - (biasGradients * updateFactor)
     t_elem_sub(self->bias, updateBias);
 }
@@ -26,7 +33,7 @@ struct seqmodel_layer *seqmodel_layer_init(const char *name, tensor *weights, te
         error("Must provide forward function for seqmodel_layer.");
 
     // defaults
-    l->update = seqmodel_layer_update_noop;
+    l->update = seqmodel_layer_update_std;
     l->backward = seqmodel_layer_backward_noop;
     l->forward = forward; // must be implemented!
     l->activationFn = activationFn;

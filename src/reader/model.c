@@ -46,13 +46,13 @@ struct seqmodel_layer *seqmodel_layer_from_csv(const char *layer_type, csv_reade
 
 activationfunc *activationfunc_from_str(const char *name)
 {
-    if (strcmp(name, "TANH"))
+    if (strcmp(name, "TANH") == 0)
         return av_tanh;
-    if (strcmp(name, "IDENTITY"))
+    if (strcmp(name, "IDENTITY") == 0)
         return av_identity;
-    if (strcmp(name, "SIGMOID") || strcmp(name, "LOGISTIC"))
+    if (strcmp(name, "SIGMOID") == 0 || strcmp(name, "LOGISTIC") == 0)
         return av_sigmoid; // same as logistic
-    if (strcmp(name, "RELU"))
+    if (strcmp(name, "RELU") == 0)
         return av_relu;
     return NULL;
 }

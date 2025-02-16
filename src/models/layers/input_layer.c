@@ -11,10 +11,15 @@ struct seqmodel_layer *input_layer_init()
 
 tensor *input_layer_forward(struct seqmodel_layer *self, tensor *inputs, struct forwardstate *state)
 {
+    tensor *outInputs = inputs;
+    if (inputs->ndim == 1)
+    {
+        outInputs = t_prepend_dim(inputs);
+    }
     if (state != NULL)
     {
-        state->preActivations = t_copy(inputs);
-        state->activations = t_copy(inputs);
+        state->preActivations = t_copy(outInputs);
+        state->activations = t_copy(outInputs);
     }
-    return inputs;
+    return outInputs;
 }

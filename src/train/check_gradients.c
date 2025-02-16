@@ -48,7 +48,7 @@ void check_gradients(struct seqmodel *s, int batchSize, tensor *inputs[batchSize
 
     for (int l = 0; l < s->numLayers; l++)
     {
-        printf("|-Layer %i\n", l);
+        printf("|-Layer %i: %s\n", l, s->layers[l]->name);
         if (totalWeightGradients[l] != NULL && totalBiasGradients[l] != NULL)
         {
             printf("| |-For Weights:\n");
@@ -64,7 +64,7 @@ void check_gradients(struct seqmodel *s, int batchSize, tensor *inputs[batchSize
         }
     }
 
-    param_t diff = numerator / denominator;
+    param_t diff = numerator / (denominator);
     printf("Total difference: %f", diff);
 
     if (diff < 1e-7)

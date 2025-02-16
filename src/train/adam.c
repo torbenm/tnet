@@ -109,8 +109,8 @@ struct trainingpass *opt_adam(struct seqmodel *seq, param_t *params, int batchSi
             t_div_const(velocityWeights, (1 - pow(beta2, trainingPassNum + 1)));
             t_div_const(velocityBias, (1 - pow(beta2, trainingPassNum + 1)));
 
-            tensor *updateWeights = t_mul_const(t_elem_div(momentumWeights, t_add_const(t_apply(velocityWeights, sqrt), EPSILON)), alpha * 0.1);
-            tensor *updateBias = t_mul_const(t_elem_div(momentumBias, t_add_const(t_apply(velocityBias, sqrt), EPSILON)), alpha * 0.1);
+            tensor *updateWeights = t_mul_const(t_elem_div(momentumWeights, t_add_const(t_apply(velocityWeights, sqrt), EPSILON)), alpha);
+            tensor *updateBias = t_mul_const(t_elem_div(momentumBias, t_add_const(t_apply(velocityBias, sqrt), EPSILON)), alpha);
 
             seq->layers[l]->update(
                 seq->layers[l],

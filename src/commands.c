@@ -6,13 +6,13 @@
 
 // Default parameters - might be configurable via argp at some point as well.
 #define COST_THRESHOLD 0.0001
-#define DIFF_THRESHOLD 0.00000000001
+#define DIFF_THRESHOLD 0.000000001
 #define MAX_ITER 10000000
 #define ALPHA_SGD 0.1
 #define ALPHA_ADAM 0.01
 #define BETA1 0.9
 #define BETA2 0.999
-#define LOSS_FN loss_mse()
+#define LOSS_FN loss_binary_cross_entropy()
 
 struct optimizer *__get_opt_from_arg(arguments *args)
 {
@@ -63,6 +63,12 @@ void command_train(arguments *args)
     seqmodel *s = __load_model_and_data(args, &inputs, &truths, &batchSize);
 
     optimizer *o = __get_opt_from_arg(args);
+
+    print_header("Initial predictions.");
+    for (int i = 0; i < batchSize; i++)
+    {
+        t_print(seqmodel_predict(s, inputs[i]));
+    }
     print_header("Starting optimization process with %s.", o->name);
     train(s, batchSize, inputs, truths, MAX_ITER, o, DIFF_THRESHOLD, COST_THRESHOLD);
 

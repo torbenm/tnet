@@ -403,6 +403,9 @@ tensor *_t_const_apply(tensor *dst, param_t cnst, param_t (*fn)(param_t, param_t
 
 tensor *_t_elem_apply(tensor *dst, tensor *snd, param_t (*fn)(param_t, param_t))
 {
+    // TODO: rewrite this so that it applies the function for each additional dimension
+    // that dst has to snd
+
     if (t_is_single_element(snd)) // if snd is single tensor, we apply the value to all equally (treat it as a scalar)
         return _t_const_apply(dst, snd->v[0], fn);
 
@@ -475,6 +478,11 @@ tensor *t_apply(tensor *dst, param_t (*applyFn)(param_t))
 // Tensor multiplication
 tensor *t_mul(tensor *a, tensor *b)
 {
+    // printf("\nt_mul: ");
+    // t_print_shape(a);
+    // printf(" x ");
+    // t_print_shape(b);
+    // printf(";\n");
     if (b->ndim > 2)
     {
         error("Second tensor may have at most 2 dimensions, found %i.\n", b->ndim);
@@ -498,7 +506,7 @@ tensor *t_mul(tensor *a, tensor *b)
 
     if (nA != nB)
     {
-        error("Found non-matching dimensions for multiplication. nA=%i, nB=%i.\n", nA, nB);
+        error("Found non-matching dimensions for multiplication: [%i, %i] != [%i, %i].\n", m, nA, nB, p);
     }
 
     int outputDims = a->ndim + b->ndim - 2;
@@ -547,6 +555,7 @@ tensor *t_mul(tensor *a, tensor *b)
         t_free(b);
     }
     tensor *x = t_flatten_dims(r);
+    t_free(r);
     return x;
 }
 
