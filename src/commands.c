@@ -31,24 +31,9 @@ seqmodel *__load_model_and_data(arguments *args, tensor ***outInputs, tensor ***
 
     data_header *header = mm_alloc(sizeof(header));
     *outBatchSize = parse_csv_into_inputs_and_truth(args->data_file, outInputs, outTruths, args->target_column, header);
-    // TODO: Move to extra function...
+
     printf("Read %i rows from data file.", *outBatchSize);
-    printf("\nInputs (%i): ", header->numInputColumns);
-    for (int i = 0; i < header->numInputColumns; i++)
-    {
-        if (i > 0)
-            printf(", ");
-        printf("%s", header->inputColumns[i]);
-    }
-    printf("\nTruths (%i): ", header->numTruthColumns);
-    for (int i = 0; i < header->numTruthColumns; i++)
-    {
-        if (i > 0)
-            printf(", ");
-        printf("%s", header->truthColumns[i]);
-    }
-    printf("\n");
-    // Move end...
+    print_data_header(header);
 
     seqmodel *s = seqmodel_from_file(args->model_file);
     seqmodel_print(s);

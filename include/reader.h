@@ -31,3 +31,4 @@ activationfunc *activationfunc_from_str(const char *name);
 tensor *tensor_from_csv_1dim(csv_reader *c);
 tensor **tensor_array_from_file(const char *filename, int *outNumRows);
 int parse_csv_into_inputs_and_truth(const char *filename, tensor ***outInputs, tensor ***outtruth, int truthInputSplitIdx, data_header *header);
+void print_data_header(data_header *header);

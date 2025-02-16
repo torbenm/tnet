@@ -122,3 +122,22 @@ int parse_csv_into_inputs_and_truth(const char *filename, tensor ***outInputs, t
     csv_close(c);
     return bufPtr;
 }
+
+void print_data_header(data_header *header)
+{
+    printf("\nInputs (%i): ", header->numInputColumns);
+    for (int i = 0; i < header->numInputColumns; i++)
+    {
+        if (i > 0)
+            printf(", ");
+        printf("%s", header->inputColumns[i]);
+    }
+    printf("\nTruths (%i): ", header->numTruthColumns);
+    for (int i = 0; i < header->numTruthColumns; i++)
+    {
+        if (i > 0)
+            printf(", ");
+        printf("%s", header->truthColumns[i]);
+    }
+    printf("\n");
+}
