@@ -50,19 +50,19 @@ struct seqmodel_layer *seqmodel_layer_init(const char *name, tensor *weights, te
 void seqmodel_layer_mark(struct seqmodel_layer *self);
 void seqmodel_layer_print(struct seqmodel_layer *self);
 
-struct seqmodel
+typedef struct seqmodel
 {
     int numLayers;
     int _layerBufferSize;
     struct seqmodel_layer **layers;
-};
+} seqmodel;
 struct seqmodel *seqmodel_init();
 void seqmodel_resize(struct seqmodel *seq, int newSize);
 void seqmodel_push(struct seqmodel *seq, struct seqmodel_layer *layer);
 void seqmodel_mark(struct seqmodel *seq);
 void seqmodel_print(struct seqmodel *s);
 tensor *seqmodel_predict(struct seqmodel *seq, tensor *input);
-param_t seqmodel_calculate_loss(struct seqmodel *seq, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], lossfunc *lossFn);
+param_t seqmodel_calculate_loss(struct seqmodel *seq, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], loss *loss);
 
 /**
  * Fully Connected / Dense Layer

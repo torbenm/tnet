@@ -49,7 +49,9 @@ tensor *t_from_2dim_array(int d1_size, int d2_size, param_t array[d1_size][d2_si
 tensor *t_from_3dim_array(int d1_size, int d2_size, int d3_size, param_t array[d1_size][d2_size][d3_size]);
 int t_is_single_element(tensor *t);
 void t_print(tensor *t);
-tensor *t_add_dim(tensor *t);
+tensor *t_append_dim(tensor *t);
+tensor *t_prepend_dim(tensor *t);
+tensor *t_flatten_dims(tensor *t);
 void t_print_shape(tensor *t);
 void t_calc_strides(tensor *t, int *outStrides);
 int t_get_flat_index(tensor *t, int *strides, int *indices);
@@ -86,6 +88,7 @@ param_t prand();
 void error(const char *msg, ...);
 void print_int_array(int *a, int size);
 void print_header(const char *msg, ...);
+param_t clip(param_t, param_t, param_t);
 
 // testing...
 void tensor_test();

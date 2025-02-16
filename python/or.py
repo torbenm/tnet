@@ -1,30 +1,32 @@
-import tensorflow as tf
 import numpy as np
-print("TensorFlow version:", tf.__version__)
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
 
-x = np.array([[0, 0],
-              [0, 1],
-              [1, 0],
-              [1, 1]], dtype=np.float32)
-
-y = np.array([[0, 1],
-              [1, 0],
-              [1, 0],
-              [1, 0]], dtype=np.float32)
-
+# XOR input and output data
+X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+y = np.array([[0], [1], [1], [0]])
 
 # Define the model
-model = tf.keras.models.Sequential()
-model.add(tf.keras.Input(shape=(2,)))
-model.add(tf.keras.layers.Dense(2, activation=tf.keras.activations.tanh))
-model.add(tf.keras.layers.Dense(2, activation=tf.keras.activations.softmax))
+model = Sequential()
+
+# Add layers
+# Input layer with 2 input features and a hidden layer with 4 neurons
+model.add(Dense(4, input_dim=2, activation='tanh'))
+# Output layer with 1 neuron
+model.add(Dense(1, activation='sigmoid'))
 
 # Compile the model
-# model.compile(optimizer=tf.keras.optimizers.SGD(learning_rate=0.1, momentum=0.9), loss=tf.keras.losses.MeanSquaredError(), metrics=['mse', 'binary_accuracy'])
-model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01, beta_1=0.9, beta_2=0.999), loss=tf.keras.losses.MeanSquaredError(), metrics=['mse', 'binary_accuracy'])
-model.summary()
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
-history = model.fit(x, y, batch_size=1, epochs=500)
+# Train the model
+model.fit(X, y, epochs=1000, verbose=1)
 
-predictions = model.predict_on_batch(x)
-print(predictions)
+# Evaluate the model
+loss, accuracy = model.evaluate(X, y, verbose=0)
+print(f'Accuracy: {accuracy * 100:.2f}%')
+
+# Make predictions
+predictions = model.predict(X)
+print('Predictions:')
+print(predictions.round())

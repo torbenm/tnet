@@ -107,19 +107,16 @@ tensor *av_tanh(tensor *t, int activationMode)
 tensor *av_sigmoid(tensor *t, int activationMode)
 {
     t_assert_not_locked(t);
-    if (activationMode == FUNCS_NORMAL)
+    for (int i = 0; i < t->_v_size; i++)
     {
-        for (int i = 0; i < t->_v_size; i++)
+        if (activationMode == FUNCS_NORMAL)
         {
             t->v[i] = 1.0 / (1.0 + exp(-t->v[i]));
         }
-    }
-    else
-    {
-        for (int i = 0; i < t->_v_size; i++)
+        else
         {
             param_t s = 1.0 / (1.0 + exp(-t->v[i]));
-            t->v[i] = s * (1 - s);
+            t->v[i] = s * (1.0 - s);
         }
     }
     return t;

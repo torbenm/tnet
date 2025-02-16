@@ -5,16 +5,16 @@
 #include "train.h"
 
 // Default parameters - might be configurable via argp at some point as well.
-#define COST_THRESHOLD 0.001
-#define DIFF_THRESHOLD 0.000000001
+#define COST_THRESHOLD 0.0001
+#define DIFF_THRESHOLD 0.00000000001
 #define MAX_ITER 10000000
 #define ALPHA_SGD 0.1
 #define ALPHA_ADAM 0.01
 #define BETA1 0.9
 #define BETA2 0.999
-#define LOSS_FN loss_mse
+#define LOSS_FN loss_mse()
 
-struct optimizer *__get_opt_from_arg(struct arguments *args)
+struct optimizer *__get_opt_from_arg(arguments *args)
 {
     switch (args->opt)
     {
@@ -25,43 +25,76 @@ struct optimizer *__get_opt_from_arg(struct arguments *args)
     }
 }
 
-void command_train(struct arguments *args)
+seqmodel *__load_model_and_data(arguments *args, tensor ***outInputs, tensor ***outTruths, int *outBatchSize)
 {
     print_header("Loading models & inputs from file");
-    int numInputs, numTruths;
-    tensor **inputs = tensor_array_from_file(args->inputs, &numInputs);
-    tensor **truths = tensor_array_from_file(args->truths, &numTruths);
 
-    if (numInputs != numTruths)
-        error("Can only train when number of inputs equals number of truths - got %i != %i.", numInputs, numTruths);
+    data_header *header = mm_alloc(sizeof(header));
+    *outBatchSize = parse_csv_into_inputs_and_truth(args->data_file, outInputs, outTruths, args->target_column, header);
+    // TODO: Move to extra function...
+    printf("Read %i rows from data file.", *outBatchSize);
+    printf("\nInputs (%i): ", header->numInputColumns);
+    for (int i = 0; i < header->numInputColumns; i++)
+    {
+        if (i > 0)
+            printf(", ");
+        printf("%s", header->inputColumns[i]);
+    }
+    printf("\nTruths (%i): ", header->numTruthColumns);
+    for (int i = 0; i < header->numTruthColumns; i++)
+    {
+        if (i > 0)
+            printf(", ");
+        printf("%s", header->truthColumns[i]);
+    }
+    printf("\n");
+    // Move end...
 
-    struct seqmodel *s = seqmodel_from_file(args->model);
+    seqmodel *s = seqmodel_from_file(args->model_file);
     seqmodel_print(s);
+    return s;
+}
 
-    print_header("Starting optimization process.");
-    struct optimizer *o = __get_opt_from_arg(args);
-    train(s, numInputs, inputs, truths, MAX_ITER, o, DIFF_THRESHOLD, COST_THRESHOLD);
+void command_train(arguments *args)
+{
+    tensor **inputs;
+    tensor **truths;
+    int batchSize;
+    seqmodel *s = __load_model_and_data(args, &inputs, &truths, &batchSize);
+
+    optimizer *o = __get_opt_from_arg(args);
+    print_header("Starting optimization process with %s.", o->name);
+    train(s, batchSize, inputs, truths, MAX_ITER, o, DIFF_THRESHOLD, COST_THRESHOLD);
 
     print_header("Calculating final predictions.");
-    for (int i = 0; i < numInputs; i++)
+    for (int i = 0; i < batchSize; i++)
     {
         t_print(seqmodel_predict(s, inputs[i]));
     }
 }
 
-void command_check(struct arguments *args)
+void command_predict(arguments *args)
 {
-    print_header("Loading models & inputs from file");
-    int numInputs, numTruths;
-    tensor **inputs = tensor_array_from_file(args->inputs, &numInputs);
-    tensor **truths = tensor_array_from_file(args->truths, &numTruths);
+    tensor **inputs;
+    tensor **truths;
+    int batchSize;
+    seqmodel *s = __load_model_and_data(args, &inputs, &truths, &batchSize);
 
-    if (numInputs != numTruths)
-        error("Can only train when number of inputs equals number of truths - got %i != %i.", numInputs, numTruths);
+    print_header("Predicting.");
+    for (int i = 0; i < batchSize; i++)
+    {
+        t_print(seqmodel_predict(s, inputs[i]));
+        printf("\n");
+    }
+}
 
-    struct seqmodel *s = seqmodel_from_file(args->model);
-    seqmodel_print(s);
+void command_check(arguments *args)
+{
+    tensor **inputs;
+    tensor **truths;
+    int batchSize;
+    seqmodel *s = __load_model_and_data(args, &inputs, &truths, &batchSize);
 
     print_header("Checking gradients.");
-    check_gradients(s, numInputs, inputs, truths);
+    check_gradients(s, batchSize, inputs, truths, LOSS_FN);
 }

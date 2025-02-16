@@ -4,7 +4,7 @@
 #include "models.h"
 #include "train.h"
 
-void opt_fowardbackwardpass(struct seqmodel *s, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], tensor ***outWeightGradients, tensor ***outBiasGradients)
+void opt_fowardbackwardpass(struct seqmodel *s, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], tensor ***outWeightGradients, tensor ***outBiasGradients, loss *loss)
 {
     tensor *predictions[batchSize];
     param_t batchSizeFactor = 1.0 / (param_t)batchSize;
@@ -12,7 +12,7 @@ void opt_fowardbackwardpass(struct seqmodel *s, int batchSize, tensor *inputs[ba
     for (int t = 0; t < batchSize; t++)
     {
         struct forwardstate *forwardstates = opt_forwardpropagate(s, inputs[t], &predictions[t]);
-        struct backwardstate **localbackwardstates = opt_backwardpropagate(s, predictions[t], truths[t], forwardstates);
+        struct backwardstate **localbackwardstates = opt_backwardpropagate(s, predictions[t], truths[t], forwardstates, loss);
         // Apply deltas pass
         for (int l = 0; l < s->numLayers; l++)
         {
@@ -30,8 +30,8 @@ void opt_fowardbackwardpass(struct seqmodel *s, int batchSize, tensor *inputs[ba
     {
         if ((*outWeightGradients)[l] != NULL && (*outBiasGradients)[l] != NULL)
         {
-            t_mul_const((*outWeightGradients)[l], batchSizeFactor);
-            t_mul_const((*outBiasGradients)[l], batchSizeFactor);
+            t_div_const((*outWeightGradients)[l], (param_t)batchSize);
+            t_div_const((*outBiasGradients)[l], (param_t)batchSize);
         }
     }
 }
@@ -52,11 +52,10 @@ struct forwardstate *opt_forwardpropagate(struct seqmodel *seq, tensor *inputs, 
     return forwardstates;
 }
 
-struct backwardstate **opt_backwardpropagate(struct seqmodel *seq, tensor *prediction, tensor *truth, struct forwardstate *forwardstates)
+struct backwardstate **opt_backwardpropagate(struct seqmodel *seq, tensor *prediction, tensor *truth, struct forwardstate *forwardstates, loss *loss)
 {
     // initialize with derivative of mse (TODO: replace with function call)
-    tensor *nextDelta = t_elem_sub(t_copy(prediction), truth);
-
+    tensor *nextDelta = loss->backward(prediction, truth);
     struct backwardstate **backwardstates = mm_alloc(seq->numLayers * sizeof(struct backwardstate *));
     // Calculate deltas pass
     for (int l = seq->numLayers - 1; l >= 0; l--)
@@ -80,4 +79,11 @@ struct backwardstate **opt_backwardpropagate(struct seqmodel *seq, tensor *predi
     t_free(nextDelta);
 
     return backwardstates;
+}
+
+void opt_mark(struct optimizer *o)
+{
+    mm_mark(o);
+    mm_mark(o->loss);
+    mm_mark(o->params);
 }

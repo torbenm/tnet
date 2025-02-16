@@ -17,3 +17,12 @@ void error(const char *msg, ...)
     vprintf(msg, args);
     pthread_exit(NULL);
 }
+
+param_t clip(param_t input, param_t lowerBound, param_t upperBound)
+{
+    if (input < lowerBound)
+        return lowerBound;
+    if (input > upperBound)
+        return upperBound;
+    return input;
+}

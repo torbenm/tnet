@@ -7,25 +7,20 @@
 #include "train.h"
 #include "funcs.h"
 
-struct optimizer *opt_sgd_init(param_t learningRate, param_t monumentum, lossfunc *lossFn)
+struct optimizer *opt_sgd_init(param_t learningRate, param_t monumentum, loss *loss)
 {
-    struct optimizer *o = mm_alloc(sizeof(struct optimizer));
+    optimizer *o = mm_alloc(sizeof(struct optimizer));
+    o->name = "SGD";
     o->numParams = 2;
     o->params = mm_alloc(o->numParams * sizeof(param_t));
     o->params[0] = learningRate;
     o->params[1] = monumentum;
     o->run_opt = opt_sgd;
-    o->lossFn = lossFn;
+    o->loss = loss;
     return o;
 }
 
-void opt_mark(struct optimizer *o)
-{
-    mm_mark(o);
-    mm_mark(o->params);
-}
-
-struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], lossfunc *lossFn, struct trainingpass *previouspass, int trainingPassNum)
+struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], loss *loss, struct trainingpass *previouspass, int trainingPassNum)
 {
 
     param_t learningRate = params[0];
@@ -39,7 +34,7 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
     tensor **totalWeightGradients = mm_calloc(seq->numLayers, sizeof(tensor *));
     tensor **totalBiasGradients = mm_calloc(seq->numLayers, sizeof(tensor *));
 
-    opt_fowardbackwardpass(seq, batchSize, inputs, truths, &totalWeightGradients, &totalBiasGradients);
+    opt_fowardbackwardpass(seq, batchSize, inputs, truths, &totalWeightGradients, &totalBiasGradients, loss);
 
     // Apply deltas pass
     for (int l = 0; l < seq->numLayers; l++)
@@ -95,8 +90,8 @@ struct trainingpass *opt_sgd(struct seqmodel *seq, param_t *params, int batchSiz
         }
     }
 
-    param_t loss = seqmodel_calculate_loss(seq, batchSize, inputs, truths, lossFn);
-    struct trainingpass *tp = trainingpass_init(loss, stored_tensors, seq->numLayers * 2);
+    param_t pass_loss = seqmodel_calculate_loss(seq, batchSize, inputs, truths, loss);
+    struct trainingpass *tp = trainingpass_init(pass_loss, stored_tensors, seq->numLayers * 2);
 
     return tp;
 }

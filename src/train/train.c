@@ -5,7 +5,7 @@
 #include "train.h"
 #include "core.h"
 
-void __train_mark_and_sweep(struct seqmodel *seq, int numExamples, tensor *inputs[numExamples], tensor *truths[numExamples], struct optimizer *opt, struct trainingpass *tp)
+void __train_mark_and_sweep(struct seqmodel *seq, int numExamples, tensor *inputs[numExamples], tensor *truths[numExamples], optimizer *opt, struct trainingpass *tp)
 {
     // mark
     seqmodel_mark(seq);
@@ -25,7 +25,7 @@ void __train_mark_and_sweep(struct seqmodel *seq, int numExamples, tensor *input
     mm_unmark_all();
 }
 
-void train(struct seqmodel *seq, int numExamples, tensor *inputs[numExamples], tensor *truths[numExamples], int maxIter, struct optimizer *opt, param_t diffThreshold, param_t lossThreshold)
+void train(struct seqmodel *seq, int numExamples, tensor *inputs[numExamples], tensor *truths[numExamples], int maxIter, optimizer *opt, param_t diffThreshold, param_t lossThreshold)
 {
     int converged = 0;
     int iter = 0;
@@ -39,7 +39,7 @@ void train(struct seqmodel *seq, int numExamples, tensor *inputs[numExamples], t
     {
         __train_mark_and_sweep(seq, numExamples, inputs, truths, opt, prev_pass);
         prev_loss = current_loss;
-        struct trainingpass *next_pass = opt->run_opt(seq, opt->params, numExamples, inputs, truths, opt->lossFn, prev_pass, iter);
+        struct trainingpass *next_pass = opt->run_opt(seq, opt->params, numExamples, inputs, truths, opt->loss, prev_pass, iter);
         current_loss = next_pass->loss;
         printf("Epoch %8i: loss=%.4f", iter, current_loss);
         if (iter == 0)
@@ -54,7 +54,7 @@ void train(struct seqmodel *seq, int numExamples, tensor *inputs[numExamples], t
         trainingpass_lock(prev_pass);
 
         // // Check whether the network is converging...
-        converged = fabs(prev_loss - current_loss) < diffThreshold || current_loss < lossThreshold;
+        converged = fabs(prev_loss - current_loss) < diffThreshold || fabs(current_loss) < lossThreshold;
         iter++;
     }
     printf("\n");

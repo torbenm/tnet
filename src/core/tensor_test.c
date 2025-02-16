@@ -135,7 +135,7 @@ int test_from_3dim_array()
     return TEST_SUCCESS;
 }
 
-int test_add_dim()
+int test_append_dim()
 {
     // arrange
     param_t vecIn[5] = {5, 4, 3, 2, 1};
@@ -145,7 +145,23 @@ int test_add_dim()
     tensor *out = t_from_2dim_array(5, 1, matOut);
 
     // act
-    tensor *act = t_add_dim(in);
+    tensor *act = t_append_dim(in);
+
+    // assert
+    return __vassert_tensor_equals(act, out);
+}
+
+int test_flatten_dims()
+{
+    // arrange
+    param_t matIn[5][1] = {{5}, {4}, {3}, {2}, {1}};
+    param_t vecOut[5] = {5, 4, 3, 2, 1};
+
+    tensor *in = t_from_2dim_array(5, 1, matIn);
+    tensor *out = t_from_1dim_array(5, vecOut);
+
+    // act
+    tensor *act = t_flatten_dims(in);
 
     // assert
     return __vassert_tensor_equals(act, out);
@@ -194,6 +210,24 @@ int test_mul_vec_vec_transpose()
 
     // act
     tensor *tAct = t_mul(tA, t_transpose(tB, 1));
+
+    // assert
+    return __vassert_tensor_equals(tAct, tExp);
+}
+
+int test_mul_vec_tranpose_vec_fixed()
+{
+    // arrange
+    param_t vecA[1][4] = {{1, 2, 3, 4}};
+    param_t vecB[4][1] = {{5}, {6}, {7}, {8}};
+    param_t scaExp = 1 * 5 + 2 * 6 + 3 * 7 + 4 * 8;
+
+    tensor *tA = t_from_2dim_array(1, 4, vecA);
+    tensor *tB = t_from_2dim_array(4, 1, vecB);
+    tensor *tExp = t_alloc_single_from(scaExp);
+
+    // act
+    tensor *tAct = t_mul(tA, tB);
 
     // assert
     return __vassert_tensor_equals(tAct, tExp);
@@ -345,7 +379,9 @@ void tensor_test()
     __run_test("test_get_indices", test_get_indices);
     __run_test("test_mul_vec_vec_transpose", test_mul_vec_vec_transpose);
     __run_test("test_mul_vec_tranpose_vec", test_mul_vec_tranpose_vec);
+    __run_test("test_mul_vec_tranpose_vec_fixed", test_mul_vec_tranpose_vec_fixed);
     __run_test("test_mul_mat_vec", test_mul_mat_vec);
     __run_test("test_mul_mat_mat", test_mul_mat_mat);
-    __run_test("test_add_dim", test_add_dim);
+    __run_test("test_append_dim", test_append_dim);
+    __run_test("test_flatten_dims", test_flatten_dims);
 }

@@ -7,20 +7,21 @@
 #include "train.h"
 #include "funcs.h"
 
-struct optimizer *opt_adam_init(param_t alpha, param_t beta1, param_t beta2, lossfunc *lossFn)
+struct optimizer *opt_adam_init(param_t alpha, param_t beta1, param_t beta2, loss *loss)
 {
-    struct optimizer *o = mm_alloc(sizeof(struct optimizer));
+    optimizer *o = mm_alloc(sizeof(struct optimizer));
+    o->name = "ADAM";
     o->numParams = 3;
     o->params = mm_alloc(o->numParams * sizeof(param_t));
     o->params[0] = alpha;
     o->params[1] = beta1;
     o->params[2] = beta2;
     o->run_opt = opt_adam;
-    o->lossFn = lossFn;
+    o->loss = loss;
     return o;
 }
 
-struct trainingpass *opt_adam(struct seqmodel *seq, param_t *params, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], lossfunc *lossFn, struct trainingpass *previouspass, int trainingPassNum)
+struct trainingpass *opt_adam(struct seqmodel *seq, param_t *params, int batchSize, tensor *inputs[batchSize], tensor *truths[batchSize], loss *loss, struct trainingpass *previouspass, int trainingPassNum)
 {
 
     param_t alpha = params[0];
@@ -31,7 +32,7 @@ struct trainingpass *opt_adam(struct seqmodel *seq, param_t *params, int batchSi
     tensor **totalWeightGradients = mm_calloc(seq->numLayers, sizeof(tensor *));
     tensor **totalBiasGradients = mm_calloc(seq->numLayers, sizeof(tensor *));
 
-    opt_fowardbackwardpass(seq, batchSize, inputs, truths, &totalWeightGradients, &totalBiasGradients);
+    opt_fowardbackwardpass(seq, batchSize, inputs, truths, &totalWeightGradients, &totalBiasGradients, loss);
 
     for (int l = 0; l < seq->numLayers; l++)
     {
@@ -123,8 +124,8 @@ struct trainingpass *opt_adam(struct seqmodel *seq, param_t *params, int batchSi
         }
     }
 
-    param_t loss = seqmodel_calculate_loss(seq, batchSize, inputs, truths, lossFn);
-    struct trainingpass *tp = trainingpass_init(loss, stored_tensors, seq->numLayers * 4);
+    param_t pass_loss = seqmodel_calculate_loss(seq, batchSize, inputs, truths, loss);
+    struct trainingpass *tp = trainingpass_init(pass_loss, stored_tensors, seq->numLayers * 4);
 
     return tp;
 }

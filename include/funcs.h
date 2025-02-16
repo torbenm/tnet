@@ -14,7 +14,15 @@ activationfunc av_heaviside;
 activationfunc av_sigmoid;
 activationfunc av_identity;
 
-typedef param_t lossfunc(int numExamples, tensor *predictions[numExamples], tensor *truths[numExamples]);
+typedef param_t loss_forward(tensor *p, tensor *t);
+typedef tensor *loss_backward(tensor *p, tensor *t);
 
-lossfunc loss_mse;
-lossfunc loss_abssum;
+typedef struct loss
+{
+    loss_forward *forward;
+    loss_backward *backward;
+} loss;
+
+param_t loss_over_batch(loss *l, int batchSize, tensor *predictions[batchSize], tensor *truths[batchSize]);
+loss *loss_mse();
+loss *loss_binary_cross_entropy();

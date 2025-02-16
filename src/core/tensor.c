@@ -95,13 +95,55 @@ void __t_copy_shape(tensor *t, int numDimsToCopy, int *outShape)
     __copy_array(t->shape, outShape, numDimsToCopy);
 }
 
-tensor *t_add_dim(tensor *t)
+tensor *t_append_dim(tensor *t)
 {
-    // adds a dimension which can be useful for
+    // append a dimension which can be useful for
     // transforming vectors into fake matrices. e.g. [5] shape turns into [5, 1] shape.
     int shape[t->ndim + 1];
     __t_copy_shape(t, t->ndim, shape);
     shape[t->ndim] = 1;
+    tensor *added = t_alloc(t->ndim + 1, shape);
+    for (int i = 0; i < t->_v_size; i++)
+    {
+        added->v[i] = t->v[i];
+    }
+    return added;
+}
+
+tensor *t_flatten_dims(tensor *t)
+{
+    // Determine the number of dimensions to keep
+    int new_ndim = t->ndim;
+    for (; new_ndim >= 0; new_ndim--)
+    {
+        if (t->shape[new_ndim - 1] != 1)
+            break;
+    }
+
+    if (new_ndim < 1) // all dimensions are 1 - so we keep one
+        new_ndim = 1;
+
+    // Allocate a new shape array for the reduced tensor
+    int new_shape[new_ndim];
+    __t_copy_shape(t, new_ndim, new_shape);
+    // Allocate the new tensor
+    tensor *reduced = t_alloc(new_ndim, new_shape);
+    // Copy the data
+    for (int i = 0; i < t->_v_size; i++)
+    {
+        reduced->v[i] = t->v[i];
+    }
+
+    return reduced;
+}
+
+tensor *t_prepend_dim(tensor *t)
+{
+    // prepends a dimension which can be useful for
+    // transforming vectors into fake matrices. e.g. [5] shape turns into [5, 1] shape.
+    int shape[t->ndim + 1];
+    __t_copy_shape(t, t->ndim, &shape[1]);
+    shape[0] = 1;
     tensor *added = t_alloc(t->ndim + 1, shape);
     for (int i = 0; i < t->_v_size; i++)
     {
@@ -433,92 +475,79 @@ tensor *t_apply(tensor *dst, param_t (*applyFn)(param_t))
 // Tensor multiplication
 tensor *t_mul(tensor *a, tensor *b)
 {
-    // This whole algorithm could be made easier
     if (b->ndim > 2)
-        error("Second tensor may have most have 2 dimensions, found %i.\n", b->ndim);
-
-    // get output shape. We are at most considering the last two dimensions
-    // (m x n) * (n x p) = (m x p)
+    {
+        error("Second tensor may have at most 2 dimensions, found %i.\n", b->ndim);
+    }
 
     tensor *originalA = a;
     tensor *originalB = b;
     if (a->ndim == 1)
-        a = t_add_dim(a);
-
+    {
+        a = t_append_dim(a);
+    }
     if (b->ndim == 1)
-        b = t_add_dim(b);
+    {
+        b = t_append_dim(b);
+    }
 
-    int nA, m, nB, p, outputDims;
-    nA = a->shape[a->ndim - 1];
-    m = a->shape[a->ndim - 2];
-    nB = b->shape[b->ndim - 2];
-    p = b->shape[b->ndim - 1];
-    int n = nA; // for ease of use
-
-    if (n > 1)
-        outputDims = originalA->ndim + originalB->ndim - 2;
-    else
-        outputDims = originalA->ndim + originalB->ndim - 1;
+    int nA = a->shape[a->ndim - 1];
+    int m = a->shape[a->ndim - 2];
+    int nB = b->shape[b->ndim - 2];
+    int p = b->shape[b->ndim - 1];
 
     if (nA != nB)
-        error("Found non-matching dimensions for multiplication. m=%i, nA=%i, nB=%i, p=%i.\n", m, nA, nB, p);
+    {
+        error("Found non-matching dimensions for multiplication. nA=%i, nB=%i.\n", nA, nB);
+    }
 
+    int outputDims = a->ndim + b->ndim - 2;
     int outputShape[outputDims];
-    // copy all shapes apart from the first one
     __t_copy_shape(a, a->ndim - 2, outputShape);
-    if (p > 1)
-    {
-        outputShape[outputDims - 2] = m;
-        outputShape[outputDims - 1] = p;
-    }
-    else
-    {
-        outputShape[outputDims - 1] = m;
-        // last dimension with p = 1 is being ignored.
-    }
+    outputShape[outputDims - 2] = m;
+    outputShape[outputDims - 1] = p;
 
     tensor *r = t_alloc(outputDims, outputShape);
-    int indicesA[a->ndim], indicesB[b->ndim], indicesR[r->ndim], stridesA[a->ndim], stridesB[b->ndim], stridesR[r->ndim];
 
+    int indicesA[a->ndim], indicesB[b->ndim], indicesR[r->ndim];
+    int stridesA[a->ndim], stridesB[b->ndim], stridesR[r->ndim];
     t_calc_strides(a, stridesA);
     t_calc_strides(b, stridesB);
     t_calc_strides(r, stridesR);
 
-    for (int flatIdx = 0; flatIdx < a->_v_size; flatIdx++)
+    for (int i = 0; i < m; i++)
     {
-        t_get_indices(a, flatIdx, stridesA, indicesA);
-        // formula is r_ik = sum(a_ij * b_jk);
-        // with 1 <= i <= m; 1 <= k <= p; 1 <= j <= n(A/B)
-        __copy_array(indicesA, indicesR, a->ndim - 2);
-
-        int i, j, k;
-        i = indicesA[a->ndim - 2];
-        j = indicesA[a->ndim - 1];
-        indicesB[b->ndim - 2] = j;
         for (int k = 0; k < p; k++)
         {
-            if (p > 1)
-            {
-                indicesR[r->ndim - 2] = i;
-                indicesR[r->ndim - 1] = k;
-            }
-            else
-            {
-                indicesR[r->ndim - 1] = i; // k will always 0
-            }
-            indicesB[b->ndim - 1] = k;
+            indicesR[r->ndim - 2] = i;
+            indicesR[r->ndim - 1] = k;
             int idxR = t_get_flat_index(r, stridesR, indicesR);
-            int idxB = t_get_flat_index(b, stridesB, indicesB);
-            r->v[idxR] += a->v[flatIdx] * b->v[idxB];
+
+            for (int j = 0; j < nA; j++)
+            {
+                indicesA[a->ndim - 2] = i;
+                indicesA[a->ndim - 1] = j;
+                int idxA = t_get_flat_index(a, stridesA, indicesA);
+
+                indicesB[b->ndim - 2] = j;
+                indicesB[b->ndim - 1] = k;
+                int idxB = t_get_flat_index(b, stridesB, indicesB);
+
+                r->v[idxR] += a->v[idxA] * b->v[idxB];
+            }
         }
     }
 
     if (originalA->ndim == 1)
+    {
         t_free(a);
+    }
     if (originalB->ndim == 1)
+    {
         t_free(b);
-
-    return r;
+    }
+    tensor *x = t_flatten_dims(r);
+    return x;
 }
 
 tensor *__t_transpose_2dim(tensor *t)
@@ -555,7 +584,7 @@ tensor *__t_transpose_2dim(tensor *t)
 
 tensor *__t_transpose_1dim(tensor *t)
 {
-    tensor *with_added_dim = t_add_dim(t);
+    tensor *with_added_dim = t_append_dim(t);
     tensor *tT = __t_transpose_2dim(with_added_dim);
     t_free(with_added_dim);
     return tT;
@@ -698,10 +727,9 @@ void t_print(tensor *t)
     if (t->ndim == 1 && t->shape[0] == 1)
     {
         // single element tensor
-        printf("%.4f", t->v[0]);
+        printf("%.4f\n", t->v[0]);
         return;
     }
-
     // this will store the multidimensional coords derived from singledimensional coords
     // based on the shape/offsets.
     int *currentDimsIdx = mm_calloc(t->ndim, sizeof(int));

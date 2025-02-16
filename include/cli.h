@@ -4,14 +4,15 @@
 #define OPT_ADAM 2
 
 /* Used by main to communicate with parse_opt. */
-struct arguments
+typedef struct
 {
     char *subcommand;
-    char *model;
-    char *inputs;
-    char *truths;
+    char *model_file;
+    char *data_file;
+    int target_column;
     int opt;
-};
+} arguments;
 
-void command_train(struct arguments *args);
-void command_check(struct arguments *args);
+void command_train(arguments *args);
+void command_check(arguments *args);
+void command_predict(arguments *args);

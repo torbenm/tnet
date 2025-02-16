@@ -26,7 +26,6 @@ struct seqmodel_layer *dense_layer_init(int numNodes, int numInputs, activationf
 
 tensor *dense_layer_forward(struct seqmodel_layer *self, tensor *inputs, struct forwardstate *state)
 {
-    // activations = activationFn(weights * input + bias)
     tensor *dotProduct = t_mul(self->weights, inputs);
     tensor *preActivations = t_elem_add(t_copy(dotProduct), self->bias);
     tensor *activations = self->activationFn(t_copy(preActivations), FUNCS_NORMAL);
@@ -47,7 +46,6 @@ tensor *dense_layer_forward(struct seqmodel_layer *self, tensor *inputs, struct 
 
 struct backwardstate *dense_layer_backward(struct seqmodel_layer *self, tensor *previousSmallDelta, struct forwardstate *curr, struct forwardstate *prev)
 {
-    struct backwardstate *bs = backwardstate_alloc();
 
     tensor *activationDerivative = self->activationFn(t_copy(curr->preActivations), FUNCS_DERIVATIVE);
     tensor *smallDelta = t_elem_mul(t_copy(previousSmallDelta), activationDerivative);
@@ -60,6 +58,7 @@ struct backwardstate *dense_layer_backward(struct seqmodel_layer *self, tensor *
 
     tensor *deltaW = t_mul(smallDelta, activations_t);
 
+    struct backwardstate *bs = backwardstate_alloc();
     bs->smallDelta = nextSmallDelta;
     bs->weightGradients = deltaW;
     bs->biasGradients = smallDelta;
