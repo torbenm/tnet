@@ -86,8 +86,6 @@ int main(int argc, char **argv)
         command_check(&arguments);
     else if (strcmp(arguments.subcommand, "predict") == 0)
         command_predict(&arguments);
-    else if (strcmp(arguments.subcommand, "tensor-test") == 0)
-        tensor_test();
     else
     {
         fprintf(stderr, "Unknown subcommand: %s\n", arguments.subcommand);

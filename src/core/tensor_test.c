@@ -2,67 +2,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include "core.h"
+#include "test.h"
 
-#define TEST_FAILURE 0
-#define TEST_SUCCESS 1
-
-// assertions
-int __assert_tensor_equals(tensor *actual, tensor *expected)
-{
-    if (actual->ndim != expected->ndim)
-        return TEST_FAILURE;
-    for (int i = 0; i < actual->ndim; i++)
-        if (actual->shape[i] != expected->shape[i])
-            return TEST_FAILURE;
-    for (int i = 0; i < actual->_v_size; i++)
-    {
-        if (actual->v[i] != expected->v[i])
-            return TEST_FAILURE;
-    }
-    return TEST_SUCCESS;
-}
-
-int __vassert_tensor_equals(tensor *actual, tensor *expected)
-{
-    // same as above, but printing if tensors are not equal
-    if (__assert_tensor_equals(actual, expected) == TEST_FAILURE)
-    {
-        printf("The following tensors are not equal.\n");
-        t_print(actual);
-        printf("\n!=\n");
-        t_print(expected);
-        return TEST_FAILURE;
-    }
-    return TEST_SUCCESS;
-}
-
-int __vassert_int_array_equals(int *actual, int *expected, int size)
-{
-    for (int i = 0; i < size; i++)
-    {
-        if (actual[i] != expected[i])
-        {
-            printf("Arrays are not equal: ");
-            print_int_array(actual, size);
-            printf(" != ");
-            print_int_array(expected, size);
-            return TEST_FAILURE;
-        }
-    }
-    return TEST_SUCCESS;
-}
-
-int __vassert_int_equals(int actual, int expected)
-{
-    if (actual != expected)
-    {
-        printf("Integers are not equal: %i != %i", actual, expected);
-        return TEST_FAILURE;
-    }
-    return TEST_SUCCESS;
-}
-
-// Test cases
 int test_from_1dim_array()
 {
     // arrange
@@ -148,7 +89,7 @@ int test_append_dim()
     tensor *act = t_append_dim(in);
 
     // assert
-    return __vassert_tensor_equals(act, out);
+    return assert_tensor_equals(act, out);
 }
 
 int test_flatten_dims()
@@ -164,7 +105,7 @@ int test_flatten_dims()
     tensor *act = t_flatten_dims(in);
 
     // assert
-    return __vassert_tensor_equals(act, out);
+    return assert_tensor_equals(act, out);
 }
 
 int test_vector_transpose()
@@ -179,7 +120,7 @@ int test_vector_transpose()
     tensor *res = t_transpose(in, 1);
 
     // assert
-    return __vassert_tensor_equals(res, out);
+    return assert_tensor_equals(res, out);
 }
 
 int test_mat_transpose()
@@ -194,7 +135,7 @@ int test_mat_transpose()
     tensor *res = t_transpose(in, 2);
 
     // assert
-    return __vassert_tensor_equals(res, out);
+    return assert_tensor_equals(res, out);
 }
 
 int test_mul_vec_vec_transpose()
@@ -212,7 +153,7 @@ int test_mul_vec_vec_transpose()
     tensor *tAct = t_mul(tA, t_transpose(tB, 1));
 
     // assert
-    return __vassert_tensor_equals(tAct, tExp);
+    return assert_tensor_equals(tAct, tExp);
 }
 
 int test_mul_vec_tranpose_vec_fixed()
@@ -230,7 +171,7 @@ int test_mul_vec_tranpose_vec_fixed()
     tensor *tAct = t_mul(tA, tB);
 
     // assert
-    return __vassert_tensor_equals(tAct, tExp);
+    return assert_tensor_equals(tAct, tExp);
 }
 
 int test_mul_vec_tranpose_vec()
@@ -248,7 +189,7 @@ int test_mul_vec_tranpose_vec()
     tensor *tAct = t_mul(t_transpose(tA, 1), tB);
 
     // assert
-    return __vassert_tensor_equals(tAct, tExp);
+    return assert_tensor_equals(tAct, tExp);
 }
 
 int test_mul_mat_vec()
@@ -266,7 +207,7 @@ int test_mul_mat_vec()
     tensor *tAct = t_mul(tA, tB);
 
     // assert
-    return __vassert_tensor_equals(tAct, tExp);
+    return assert_tensor_equals(tAct, tExp);
 }
 
 int test_mul_mat_mat()
@@ -284,7 +225,7 @@ int test_mul_mat_mat()
     tensor *tAct = t_mul(tA, tB);
 
     // assert
-    return __vassert_tensor_equals(tAct, tExp);
+    return assert_tensor_equals(tAct, tExp);
 }
 
 int test_calc_strides()
@@ -299,7 +240,7 @@ int test_calc_strides()
     t_calc_strides(t_in, outStrides);
 
     // assert
-    return __vassert_int_array_equals(outStrides, expectedStrides, 3);
+    return assert_int_array_equals(outStrides, expectedStrides, 3);
 }
 
 int test_get_flat_index()
@@ -316,7 +257,7 @@ int test_get_flat_index()
     int res = t_get_flat_index(t_in, strides, indices);
 
     // assert
-    return __vassert_int_equals(res, 57);
+    return assert_int_equals(res, 57);
 }
 
 int test_get_indices()
@@ -333,55 +274,5 @@ int test_get_indices()
     t_get_indices(t_in, 57, strides, outIndices);
 
     // assert
-    return __vassert_int_array_equals(outIndices, expectedIndices, 3);
-}
-
-// Utils
-void *__test_thread(void *testFn)
-{
-    int *ret = malloc(sizeof(int));
-    ret[0] = ((int (*)(void))testFn)();
-    pthread_exit(ret);
-}
-
-void __run_test(const char *testName, int (*testFn)(void))
-{
-    pthread_t testThread;
-    void *ret;
-    printf("Running test case '%s' ..... ", testName);
-
-    if (pthread_create(&testThread, NULL, __test_thread, testFn) != 0)
-    {
-        error("failed to start thread.\n");
-    }
-
-    if (pthread_join(testThread, &ret) != 0)
-    {
-        error("failed to join thread.\n");
-    }
-    if (ret != NULL && ((int *)ret)[0] == TEST_SUCCESS)
-        printf(" ✅");
-    else
-        printf(" ❌");
-    printf("\n");
-    free(ret);
-}
-
-void tensor_test()
-{
-    __run_test("test_from_1dim_array", test_from_1dim_array);
-    __run_test("test_from_2dim_array", test_from_2dim_array);
-    __run_test("test_from_3dim_array", test_from_2dim_array);
-    __run_test("test_vector_transpose", test_vector_transpose);
-    __run_test("test_mat_transpose", test_mat_transpose);
-    __run_test("test_calc_strides", test_calc_strides);
-    __run_test("test_get_flat_index", test_get_flat_index);
-    __run_test("test_get_indices", test_get_indices);
-    __run_test("test_mul_vec_vec_transpose", test_mul_vec_vec_transpose);
-    __run_test("test_mul_vec_tranpose_vec", test_mul_vec_tranpose_vec);
-    __run_test("test_mul_vec_tranpose_vec_fixed", test_mul_vec_tranpose_vec_fixed);
-    __run_test("test_mul_mat_vec", test_mul_mat_vec);
-    __run_test("test_mul_mat_mat", test_mul_mat_mat);
-    __run_test("test_append_dim", test_append_dim);
-    __run_test("test_flatten_dims", test_flatten_dims);
+    return assert_int_array_equals(outIndices, expectedIndices, 3);
 }
