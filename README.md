@@ -37,8 +37,7 @@ make
 After building, run the following for an XOR example:
 
 ```
-./bin/tnet train --model ./data/models/xor.csv --inputs ./data/inputs/xor.csv --truth ./data/truths/xor.csv --opt adam --out ./data/trained/xor.wghts
-./bin/tnet predict --model ./data/trained/xor.wghts --inputs ./data/inputs/xor.csv
+./bin/tnet train -m ./data/binary_ops/model_test.csv -d ./data/binary_ops/xor.csv -t 2 -o adam
 ```
 
 ## 'Mark-and-Sweep'-ish Garbage Collector
