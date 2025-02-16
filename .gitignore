@@ -16,3 +16,5 @@ Makefile
 
 # testing
 Testing/
+CTestTestFile.cmake
+DartConfiguration.tcl
