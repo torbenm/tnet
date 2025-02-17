@@ -29,7 +29,7 @@ seqmodel *__load_model_and_data(arguments *args, tensor ***outInputs, tensor ***
 {
     print_header("Loading models & inputs from file");
 
-    data_header *header = mm_alloc(sizeof(header));
+    data_header *header = mm_alloc(sizeof(data_header));
     *outBatchSize = parse_csv_into_inputs_and_truth(args->data_file, outInputs, outTruths, args->target_column, header);
 
     printf("Read %i rows from data file.", *outBatchSize);

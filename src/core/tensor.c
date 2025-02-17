@@ -478,11 +478,6 @@ tensor *t_apply(tensor *dst, param_t (*applyFn)(param_t))
 // Tensor multiplication
 tensor *t_mul(tensor *a, tensor *b)
 {
-    // printf("\nt_mul: ");
-    // t_print_shape(a);
-    // printf(" x ");
-    // t_print_shape(b);
-    // printf(";\n");
     if (b->ndim > 2)
     {
         error("Second tensor may have at most 2 dimensions, found %i.\n", b->ndim);
@@ -741,7 +736,7 @@ void t_print(tensor *t)
     }
     // this will store the multidimensional coords derived from singledimensional coords
     // based on the shape/offsets.
-    int *currentDimsIdx = mm_calloc(t->ndim, sizeof(int));
+    int currentDimsIdx[t->ndim];
 
     // Opening brackets for all dimensions
     for (int d = 0; d < t->ndim; d++)
@@ -793,5 +788,4 @@ void t_print(tensor *t)
     for (int d = 0; d < t->ndim; d++)
         printf("]");
     printf("\n");
-    mm_free(currentDimsIdx);
 }

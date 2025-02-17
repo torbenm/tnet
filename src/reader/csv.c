@@ -15,6 +15,8 @@
 csv_reader *csv_open(const char *filename)
 {
     csv_reader *c = mm_calloc(1, sizeof(csv_reader));
+    if (c == NULL)
+        error("Failed to allocate csv_reader");
     c->file = fopen(filename, "r");
     if (c->file == NULL)
         error("Error opening file %s!", filename);
@@ -30,25 +32,33 @@ void csv_close(csv_reader *c)
 /**
  * Reads the next field as 'string'. May at most be 1024 characters long
  */
-char *csv_next_field(csv_reader *c)
+char *csv_next_field(csv_reader *c, int *outReadStatus)
 {
     char buffer[BUFFER_SIZE];
     int buf_ptr;
-    char ch;
+    int ch;
     int isEscaped = 0;
+    if (outReadStatus != NULL)
+        *outReadStatus = READ_STATUS_MORE;
+    if (c == NULL || c->file == NULL)
+        error("Invalid file pointer.");
+
     for (buf_ptr = 0; buf_ptr < BUFFER_SIZE;)
     {
         ch = fgetc(c->file);
+
         if (ch == '\n')
         {
-            // going one char back in the file to allow 'csv_seek_next_line'
-            // to be called
-            // printf(" %lu ", ftell(c->file));
-            fseek(c->file, -1, SEEK_CUR); // maybe this is wrong
+            if (outReadStatus != NULL)
+                *outReadStatus = READ_STATUS_EOL;
             break;
         }
-        else if (ch == EOF)
+        if (ch == EOF)
+        {
+            if (outReadStatus != NULL)
+                *outReadStatus = READ_STATUS_EOF;
             break;
+        }
         if (ch == ESCAPE)
         {
             isEscaped = !isEscaped;
@@ -56,8 +66,7 @@ char *csv_next_field(csv_reader *c)
         }
         else if (ch == DELIMITER && !isEscaped)
             break; // skipping to end of loop
-        // printf("++%x", ch);
-        buffer[buf_ptr++] = ch;
+        buffer[buf_ptr++] = (char)ch;
     }
     if (buf_ptr == 0)
     {
@@ -88,9 +97,9 @@ param_t str_to_param(const char *field)
 /**
  * Reads the next field (until ';') and returns it as a parsed int
  */
-int csv_next_field_int(csv_reader *c)
+int csv_next_field_int(csv_reader *c, int *outReadStatus)
 {
-    char *field = csv_next_field(c);
+    char *field = csv_next_field(c, outReadStatus);
     if (field == NULL)
         error("Could not read non-nullable field that is null as integer.");
     int result = (int)strtol(field, (char **)NULL, 10);
@@ -104,14 +113,23 @@ int csv_next_field_int(csv_reader *c)
 /**
  * Continues on the buffer until it finds a '\n'.
  * Returns EOF if the end of file is reached
+ * You may pass in a readStatus from a previous csv_next_field call here.
+ * It will behave such as:
+ * - READ_STATUS_MORE -> read until new line character or EOF
+ * - READ_STATUS_EOL -> immediately return READ_STATUS_EOL
+ * - READ_STATUS_EOF -> immediately return READ_STATUS_EOF
  */
-int csv_seek_next_line(csv_reader *c)
+int csv_seek_next_line(csv_reader *c, int readStatus)
 {
-    char ch;
+    if (readStatus > READ_STATUS_MORE)
+        return readStatus;
+    int ch;
+    if (c == NULL || c->file == NULL)
+        error("No valid csv_reader object provided.");
     while ((ch = fgetc(c->file)) != EOF)
     {
         if (ch == '\n') // new line found
-            return 0;
+            return READ_STATUS_EOL;
     }
-    return EOF;
+    return READ_STATUS_EOF;
 }

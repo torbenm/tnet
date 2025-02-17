@@ -19,8 +19,8 @@ void opt_fowardbackwardpass(struct seqmodel *s, int batchSize, tensor *inputs[ba
             // Some layers don't provide us one
             if (localbackwardstates[l] != NULL && localbackwardstates[l]->weightGradients != NULL && localbackwardstates[l]->biasGradients != NULL)
             {
-                t_copy_or_add(&(*outWeightGradients)[l], localbackwardstates[l]->weightGradients);
-                t_copy_or_add(&(*outBiasGradients)[l], localbackwardstates[l]->biasGradients);
+                t_copy_or_add(&((*outWeightGradients)[l]), localbackwardstates[l]->weightGradients);
+                t_copy_or_add(&((*outBiasGradients)[l]), localbackwardstates[l]->biasGradients);
             }
         }
     }
@@ -53,9 +53,10 @@ struct forwardstate *opt_forwardpropagate(struct seqmodel *seq, tensor *inputs, 
 
 struct backwardstate **opt_backwardpropagate(struct seqmodel *seq, tensor *prediction, tensor *truth, struct forwardstate *forwardstates, loss *loss)
 {
-    tensor *nextDelta = loss->backward(prediction, truth);
+    tensor *initial_loss = loss->backward(prediction, truth);
     struct backwardstate **backwardstates = mm_alloc(seq->numLayers * sizeof(struct backwardstate *));
     // Calculate deltas pass
+    tensor *nextDelta = initial_loss;
     for (int l = seq->numLayers - 1; l >= 0; l--)
     {
         struct forwardstate *prev = NULL;
@@ -67,14 +68,13 @@ struct backwardstate **opt_backwardpropagate(struct seqmodel *seq, tensor *predi
             &forwardstates[l],
             prev);
 
-        t_free(nextDelta);
         if (l < seq->numLayers - 1)
             backwardstates[l + 1]->smallDelta = NULL;
 
         if (backwardstates[l] != NULL)
             nextDelta = backwardstates[l]->smallDelta;
     }
-    t_free(nextDelta);
+    t_free(initial_loss);
 
     return backwardstates;
 }

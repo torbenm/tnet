@@ -4,6 +4,10 @@
 #include "funcs.h"
 #include "models.h"
 
+#define READ_STATUS_MORE 0
+#define READ_STATUS_EOL 1
+#define READ_STATUS_EOF 2
+
 typedef struct csv_reader
 {
     FILE *file;
@@ -19,13 +23,13 @@ typedef struct data_header
 
 csv_reader *csv_open(const char *filename);
 void csv_close(csv_reader *c);
-int csv_seek_next_line(csv_reader *c);
-char *csv_next_field(csv_reader *c);
-int csv_next_field_int(csv_reader *c);
+int csv_seek_next_line(csv_reader *c, int readStatus);
+char *csv_next_field(csv_reader *c, int *outReadStatus);
+int csv_next_field_int(csv_reader *c, int *outReadStatus);
 param_t str_to_param(const char *field);
 
 struct seqmodel *seqmodel_from_file(const char *filename);
-struct seqmodel_layer *seqmodel_layer_from_csv(const char *layer_type, csv_reader *c);
+struct seqmodel_layer *seqmodel_layer_from_csv(const char *layer_type, csv_reader *c, int *lastReadStatus);
 activationfunc *activationfunc_from_str(const char *name);
 
 tensor *tensor_from_csv_1dim(csv_reader *c);

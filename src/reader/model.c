@@ -11,20 +11,24 @@ struct seqmodel *seqmodel_from_file(const char *filename)
 
     // will run seek next line at first, skipping header line
     char *layer_type;
-    while (csv_seek_next_line(c) != EOF)
+    int lastReadStatus = READ_STATUS_MORE;
+    // skip first line
+    csv_seek_next_line(c, 0);
+    do
     {
-        layer_type = csv_next_field(c);
+        layer_type = csv_next_field(c, &lastReadStatus);
         if (layer_type != NULL)
         {
-            seqmodel_push(s, seqmodel_layer_from_csv(layer_type, c));
+            seqmodel_push(s, seqmodel_layer_from_csv(layer_type, c, &lastReadStatus));
         }
-    }
+        lastReadStatus = csv_seek_next_line(c, lastReadStatus);
+    } while (lastReadStatus != READ_STATUS_EOF);
 
     csv_close(c);
     return s;
 }
 
-struct seqmodel_layer *seqmodel_layer_from_csv(const char *layer_type, csv_reader *c)
+struct seqmodel_layer *seqmodel_layer_from_csv(const char *layer_type, csv_reader *c, int *lastReadStatus)
 {
     if (strcmp(layer_type, "INPUT") == 0)
     {
@@ -33,14 +37,15 @@ struct seqmodel_layer *seqmodel_layer_from_csv(const char *layer_type, csv_reade
     if (strcmp(layer_type, "DENSE") == 0)
     {
         return dense_layer_init(
-            csv_next_field_int(c),
-            csv_next_field_int(c),
-            activationfunc_from_str(csv_next_field(c)));
+            csv_next_field_int(c, lastReadStatus),
+            csv_next_field_int(c, lastReadStatus),
+            activationfunc_from_str(csv_next_field(c, lastReadStatus)));
     }
     if (strcmp(layer_type, "SOFTMAX") == 0)
     {
         return softmax_layer_init();
     }
+    error("Unknown layer %s.", layer_type);
     return NULL;
 }
 

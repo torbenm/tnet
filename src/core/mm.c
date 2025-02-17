@@ -1,128 +1,127 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stddef.h>
+#include <stdbool.h>
 
 #include "core.h"
 
-/**
- * "Basic" Garbage collector & memory management.
- * All allocated memory is stored in a list of pointers.
- * You may run mm_sweep(); every now and then - this will go through the list of pointers
- * and remove all memory allocations that have not been markd before.
- */
-
-/**
- * Defines the maximum number of pointers - currently hardcoded
- */
 #define MAX_MEMORY_POINTERS 4096
 
-void *MEMORY_POINTERS[MAX_MEMORY_POINTERS];
-void *MARKED_MM_PTRS[MAX_MEMORY_POINTERS];
-size_t next_memory_ptr = 0;
-size_t next_markd_ptr = 0;
+static void *MEMORY_POINTERS[MAX_MEMORY_POINTERS] = {NULL};
+static void *MARKED_MM_PTRS[MAX_MEMORY_POINTERS] = {NULL};
+static size_t next_memory_ptr = 0;
+static size_t next_markd_ptr = 0;
 
 void __mm_compact()
 {
-    // compact the pointers list
-    void *new_buffer[MAX_MEMORY_POINTERS];
     size_t new_buffer_ptr = 0;
-    for (int i = 0; i < next_memory_ptr; i++)
+    for (size_t i = 0; i < next_memory_ptr; i++)
     {
         if (MEMORY_POINTERS[i] != NULL)
-            new_buffer[new_buffer_ptr++] = MEMORY_POINTERS[i];
+        {
+            MEMORY_POINTERS[new_buffer_ptr++] = MEMORY_POINTERS[i];
+        }
     }
-
-    // just changing the pointers to this probably is more effective,
-    // but this is easier right now...
-    next_memory_ptr = 0;
-    for (int i = 0; i < new_buffer_ptr; i++)
-    {
-        MEMORY_POINTERS[next_memory_ptr++] = new_buffer[i];
-    }
+    next_memory_ptr = new_buffer_ptr;
 }
 
 void __mm_compact_if_needed()
 {
-    if (next_memory_ptr > MAX_MEMORY_POINTERS)
+    if (next_memory_ptr >= MAX_MEMORY_POINTERS)
     {
         __mm_compact();
-        if (next_memory_ptr > MAX_MEMORY_POINTERS) // let's see if this fixed it...
-            error("You tried to allocate too much memory :(. Either try wiping more often or make the memory ptrs list more flexible...\n");
+        if (next_memory_ptr >= MAX_MEMORY_POINTERS)
+        {
+            error("You tried to allocate too much memory. Consider increasing MAX_MEMORY_POINTERS.");
+        }
     }
 }
 
 void *mm_alloc(size_t __size)
 {
     __mm_compact_if_needed();
-    MEMORY_POINTERS[next_memory_ptr] = malloc(__size);
-    if (MEMORY_POINTERS[next_memory_ptr] == NULL)
+    void *ptr = malloc(__size);
+    if (ptr == NULL)
     {
         error("Failed to allocate memory with malloc.");
     }
-    return MEMORY_POINTERS[next_memory_ptr++];
+    MEMORY_POINTERS[next_memory_ptr++] = ptr;
+    return ptr;
 }
+
 void *mm_calloc(size_t __count, size_t __size)
 {
     __mm_compact_if_needed();
-
-    MEMORY_POINTERS[next_memory_ptr] = calloc(__count, __size);
-    if (MEMORY_POINTERS[next_memory_ptr] == NULL)
+    void *ptr = calloc(__count, __size);
+    if (ptr == NULL)
     {
         error("Failed to allocate memory with calloc.");
     }
-    return MEMORY_POINTERS[next_memory_ptr++];
+    MEMORY_POINTERS[next_memory_ptr++] = ptr;
+    return ptr;
 }
+
 void mm_free(void *ptr)
 {
-    for (int i = 0; i < next_memory_ptr; i++)
+    if (ptr == NULL)
+        return;
+    for (size_t i = 0; i < next_memory_ptr; i++)
     {
         if (MEMORY_POINTERS[i] == ptr)
         {
-            MEMORY_POINTERS[i] = NULL;
             free(ptr);
+            MEMORY_POINTERS[i] = NULL;
+            break;
         }
     }
 }
+
 void mm_mark(void *ptr)
 {
-    if (next_markd_ptr > MAX_MEMORY_POINTERS)
-        error("You tried to mark too many pointers :(. Either try wiping more often or make the memory ptrs list more flexible...\n");
+    if (next_markd_ptr >= MAX_MEMORY_POINTERS)
+    {
+        error("You tried to mark too many pointers. Consider increasing MAX_MEMORY_POINTERS.");
+    }
     MARKED_MM_PTRS[next_markd_ptr++] = ptr;
 }
+
 void mm_unmark(void *ptr)
 {
-    for (int i = 0; i < next_markd_ptr; i++)
+    for (size_t i = 0; i < next_markd_ptr; i++)
     {
         if (MARKED_MM_PTRS[i] == ptr)
         {
             MARKED_MM_PTRS[i] = NULL;
+            break;
         }
     }
 }
+
 void mm_unmark_all()
 {
-    // just setting next_markd_ptr to 0
     next_markd_ptr = 0;
 }
 
-int __mm_sweep_ptr(int memoryPtrIdx)
+bool __mm_is_marked(void *ptr)
 {
-    for (int m = 0; m < next_markd_ptr; m++)
+    for (size_t m = 0; m < next_markd_ptr; m++)
     {
-        if (MARKED_MM_PTRS[m] == MEMORY_POINTERS[memoryPtrIdx])
-            return 0;
+        if (MARKED_MM_PTRS[m] == ptr)
+        {
+            return true;
+        }
     }
-    free(MEMORY_POINTERS[memoryPtrIdx]);
-    MEMORY_POINTERS[memoryPtrIdx] = NULL;
-    return 1;
+    return false;
 }
 
 void mm_sweep()
 {
-    for (int i = 0; i < next_memory_ptr; i++)
+    for (size_t i = 0; i < next_memory_ptr; i++)
     {
-        if (MEMORY_POINTERS[i] != NULL)
-            __mm_sweep_ptr(i);
+        if (MEMORY_POINTERS[i] != NULL && !__mm_is_marked(MEMORY_POINTERS[i]))
+        {
+            free(MEMORY_POINTERS[i]);
+            MEMORY_POINTERS[i] = NULL;
+        }
     }
     __mm_compact();
 }
